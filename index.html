@@ -923,7 +923,7 @@ ssh arduino@100.x.y.z</code></pre><button class="copy-btn" onclick="copyCode(thi
       <div class="code-block"><pre><code>cc</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
       <p>Then ask, for example:</p>
       <div class="code-block prose"><pre><code>Install cloudflared if it isn't already, then start a Cloudflare quick tunnel that exposes my local web server on http://localhost:8080 and print the public trycloudflare.com URL.</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <p>Claude runs the same steps documented below &mdash; confirming the architecture, installing <code>cloudflared</code>, and starting the tunnel &mdash; then hands you the public URL. Want it to survive reboots? Just add: <em>&ldquo;make it a persistent named tunnel running as a systemd service.&rdquo;</em></p>
+      <p>Claude runs the same steps documented below &mdash; confirming the architecture, installing <code>cloudflared</code>, and starting the tunnel &mdash; then hands you the public URL. Want a permanent address that survives reboots? Just add: <em>&ldquo;make it a persistent named tunnel on my domain running as a systemd service&rdquo;</em> &mdash; though for that you'll first need your own domain added to Cloudflare (see the named-tunnel step below).</p>
       <div class="warning"><p>The <code>cc</code> alias runs with <code>--dangerously-skip-permissions</code>, so Claude executes these <code>sudo</code> commands without stopping to ask. That's convenient on a board you control; if you'd rather approve each action, launch plain <code>claude</code> instead of <code>cc</code>.</p></div>
     </div>
     <p class="or-manual">Prefer to run it yourself, or want to understand each piece? Follow the manual steps below. &darr;</p>
@@ -961,7 +961,7 @@ sudo mv cloudflared /usr/local/bin/</code></pre><button class="copy-btn" onclick
         <p>The fastest way to go public: point a quick tunnel at your local port. No Cloudflare account and no domain required.</p>
         <div class="code-block"><pre><code>cloudflared tunnel --url http://localhost:8080</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <p>cloudflared prints a random public URL of the form <code>https://&lt;random-words&gt;.trycloudflare.com</code> (for example <code>https://happy-tree-cloud-1234.trycloudflare.com</code>). Anyone can reach your local server at that URL while the command runs.</p>
-        <div class="note"><p>Quick tunnels are for demos and testing only: the URL changes on every restart, there is no uptime guarantee, and they are rate-limited. Use a named tunnel for anything you want to keep online.</p></div>
+        <div class="warning"><p><strong>This is not a permanent solution.</strong> The <code>trycloudflare.com</code> URL is random and throwaway &mdash; it changes every time <code>cloudflared</code> restarts, disappears when the command stops, has no uptime guarantee, and is rate-limited. It's perfect for a quick demo or sharing a link for a few minutes. For a real, stable site you control &mdash; with your own web address &mdash; set up a named tunnel on your own domain (next).</p></div>
       </div>
     </div>
 
@@ -969,6 +969,7 @@ sudo mv cloudflared /usr/local/bin/</code></pre><button class="copy-btn" onclick
       <div class="substep-head"><span class="substep-num">4</span><h3>Persistent named tunnel (free Cloudflare account)</h3></div>
       <div class="substep-body">
         <p>For a stable URL on your own domain, create a free account at <a href="https://dash.cloudflare.com/sign-up">dash.cloudflare.com</a> and add a domain whose nameservers point at Cloudflare (the zone). Then authenticate &mdash; on the headless Uno Q this prints a URL you open in a browser on another machine.</p>
+        <div class="note"><p><strong>You bring the domain.</strong> Cloudflare Tunnel is free, but a permanent public address needs a domain <em>you own</em> (register one with any registrar &mdash; Cloudflare, Namecheap, etc.), added to Cloudflare as a zone with its nameservers delegated to Cloudflare. That registration and DNS setup is a one-time job you do yourself in the Cloudflare dashboard before the steps below will work. Throughout this section, replace <code>app.example.com</code> with your own subdomain.</p></div>
         <div class="code-block"><pre><code>cloudflared tunnel login</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <p>Create the tunnel. This writes a credentials file to <code>~/.cloudflared/&lt;UUID&gt;.json</code> and registers a persistent name.</p>
         <div class="code-block"><pre><code>cloudflared tunnel create uno-q</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
