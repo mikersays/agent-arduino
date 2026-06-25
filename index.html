@@ -668,13 +668,9 @@ ip addr show wlan0</code></pre><button class="copy-btn" onclick="copyCode(this)"
     </div>
 
     <div class="substep">
-      <div class="substep-head"><span class="substep-num">7</span><h3>Enable SSH and connect</h3></div>
+      <div class="substep-head"><span class="substep-num">7</span><h3>Connect over SSH</h3></div>
       <div class="substep-body">
-        <p>SSH is <strong>not</strong> enabled by default. From an App Lab terminal or ADB shell, install and start the SSH server:</p>
-        <div class="code-block"><pre><code>sudo apt update &amp;&amp; sudo apt install -y openssh-server
-sudo ssh-keygen -A
-sudo systemctl enable ssh &amp;&amp; sudo systemctl start ssh</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <p>Then connect from your computer using the <code>arduino</code> account and the mDNS hostname:</p>
+        <p>SSH is <strong>enabled by default</strong> on the Uno Q &mdash; no install or service setup needed. Connect from your computer using the <code>arduino</code> account and the mDNS hostname:</p>
         <div class="code-block"><pre><code>ssh arduino@arduino.local</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <div class="note"><p>If <code>arduino.local</code> does not resolve on your network, substitute the IP you found above, for example <code>ssh arduino@192.168.1.50</code>. You can also add the board as a host in the VS Code <strong>Remote - SSH</strong> extension for full remote development.</p></div>
       </div>
@@ -689,7 +685,7 @@ sudo systemctl enable ssh &amp;&amp; sudo systemctl start ssh</code></pre><butto
     <span class="step-badge">02</span>
     <div class="step-titles">
       <h2>Reboot to Finish the Update</h2>
-      <p class="step-sub">A clean restart finishes installing the App Lab update and activates SSH and your saved config.</p>
+      <p class="step-sub">A clean restart finishes installing the App Lab update and activates your saved config.</p>
     </div>
   </div>
   <div class="step-body">
