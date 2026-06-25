@@ -39,6 +39,9 @@ confirmed. Confirmed corrections so far (from the board owner):
   `ssh arduino@<magicdns-or-100.x.y.z>` over the tailnet (don't use the `tailscale ssh` command)
 - Claude Code install is the **native installer** `curl -fsSL https://claude.ai/install.sh | bash`
   (the `npm install -g @anthropic-ai/claude-code` method is deprecated); binary lands in `~/.local/bin`
+- mDNS name is **`<hostname>.local`** where `<hostname>` is the board name chosen during App Lab
+  setup (not literally `arduino.local`); SSH as `ssh arduino@<hostname>.local`
+- Step 6 Wi-Fi is **skippable** if the user already joined Wi-Fi during App Lab's first-run setup
 
 ## Domain facts
 Board OS is Debian; default user is `arduino` (all SSH examples use `arduino@`). See recalled memory

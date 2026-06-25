@@ -47,6 +47,13 @@
       transition: border-color .15s ease, color .15s ease;
     }
     a:hover { border-bottom-color: currentColor; }
+    a:focus-visible,
+    .copy-btn:focus-visible,
+    .toc a:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+      border-radius: 3px;
+    }
 
     code {
       font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -125,8 +132,10 @@
       margin: 0 0 16px;
       font-weight: 800;
       background: linear-gradient(120deg, #e6edf3, #8b949e);
+      color: #e6edf3;
       -webkit-background-clip: text;
       background-clip: text;
+      -webkit-text-fill-color: transparent;
       color: transparent;
     }
     .hero .subtitle {
@@ -176,7 +185,7 @@
       width: 190px;
       z-index: 50;
     }
-    .toc h4 {
+    .toc .toc-title {
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -231,6 +240,12 @@
       transition: opacity .6s ease, transform .6s ease;
     }
     .step.in-view { opacity: 1; transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .step { opacity: 1; transform: none; transition: none; }
+      #progress { transition: none; }
+    }
 
     .step::after {
       content: attr(data-accent);
@@ -543,7 +558,7 @@
     footer a:hover { color: var(--blue); }
 
     /* ============ RESPONSIVE ============ */
-    @media (max-width: 1100px) {
+    @media (max-width: 1320px) {
       .toc { display: none; }
     }
     @media (max-width: 640px) {
@@ -554,6 +569,7 @@
       .hero { padding-top: 44px; }
       .header-inner { padding: 12px 16px; }
       main { padding: 16px 16px 60px; }
+      .kv-table { display: block; overflow-x: auto; }
     }
   </style>
 </head>
@@ -572,19 +588,19 @@
   <section class="hero">
     <h1>Arduino Uno Q — Full Setup Guide</h1>
     <p class="subtitle">
-      <b>App Lab</b> → <b>reboot</b> → <b>Tailscale</b> → <b>Claude Code</b> → public <b>Cloudflare tunnel</b>.
+      <b>App Lab</b> → <b>reboot</b> → <b>Tailscale</b> → <b>Claude Code</b> → public <b>Cloudflare Tunnel</b>.
     </p>
     <div class="meta-chips">
       <span>~30 min</span>
       <span>Debian Linux / aarch64</span>
-      <span>free accounts only</span>
+      <span>mostly free accounts</span>
     </div>
   </section>
 
   <nav class="toc" aria-label="On this page">
-    <h4>On this page</h4>
+    <p class="toc-title">On this page</p>
     <ol>
-      <li><a href="#step-arduino"><span class="num">01</span> Setup</a></li>
+      <li><a href="#step-arduino"><span class="num">01</span> App Lab</a></li>
       <li><a href="#step-reboot"><span class="num">02</span> Reboot</a></li>
       <li><a href="#step-tailscale"><span class="num">03</span> Tailscale</a></li>
       <li><a href="#step-claude"><span class="num">04</span> Claude Code</a></li>
@@ -657,22 +673,23 @@ sudo udevadm control --reload-rules &amp;&amp; sudo udevadm trigger</code></pre>
     <div class="substep">
       <div class="substep-head"><span class="substep-num">6</span><h3>Join Wi-Fi and find the board IP</h3></div>
       <div class="substep-body">
-        <p>The easiest path is the App Lab onboarding Wi-Fi step, or click the network icon in App Lab's upper-right to pick an access point and enter its password. The Uno Q has dual-band Wi-Fi 5 (2.4 and 5 GHz). From a shell you can connect manually:</p>
+        <div class="note"><p><strong>Already connected?</strong> If you joined Wi-Fi during App Lab's first-run setup, the board is already online &mdash; skip straight to finding its address below.</p></div>
+        <p>Otherwise, the easiest path is the App Lab onboarding Wi-Fi step, or click the network icon in App Lab's upper-right to pick an access point and enter its password. The Uno Q has dual-band Wi-Fi 5 (2.4 and 5 GHz). From a shell you can connect manually:</p>
         <div class="code-block"><pre><code>nmcli device wifi list
 sudo nmcli device wifi connect 'YOUR_SSID' password 'YOUR_WIFI_PASSWORD'</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <p>Once connected, find the board's address with <code>hostname -I</code> or by inspecting the <code>wlan0</code> interface:</p>
         <div class="code-block"><pre><code>hostname -I
 ip addr show wlan0</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <div class="note"><p>The board also advertises itself over mDNS, so you can usually reach it as <code>arduino.local</code> without knowing its IP. After Wi-Fi is configured you can unplug USB and power the board from a 5V/3A USB-C supply for headless use &mdash; App Lab will rediscover it over the network. WebUI Brick apps are then served at <code>http://&lt;board-ip&gt;:7000</code>.</p></div>
+        <div class="note"><p>The board also advertises itself over mDNS, so you can usually reach it as <code>&lt;hostname&gt;.local</code> &mdash; where <code>&lt;hostname&gt;</code> is the board name you set during App Lab setup &mdash; without knowing its IP. After Wi-Fi is configured you can unplug USB and power the board from a 5V/3A USB-C supply for headless use &mdash; App Lab will rediscover it over the network. WebUI Brick apps are then served at <code>http://&lt;board-ip&gt;:7000</code>.</p></div>
       </div>
     </div>
 
     <div class="substep">
       <div class="substep-head"><span class="substep-num">7</span><h3>Connect over SSH</h3></div>
       <div class="substep-body">
-        <p>SSH is <strong>enabled by default</strong> on the Uno Q &mdash; no install or service setup needed. Connect from your computer using the <code>arduino</code> account and the mDNS hostname:</p>
-        <div class="code-block"><pre><code>ssh arduino@arduino.local</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <div class="note"><p>If <code>arduino.local</code> does not resolve on your network, substitute the IP you found above, for example <code>ssh arduino@192.168.1.50</code>. You can also add the board as a host in the VS Code <strong>Remote - SSH</strong> extension for full remote development.</p></div>
+        <p>SSH is <strong>enabled by default</strong> on the Uno Q &mdash; no install or service setup needed. Connect from your computer using the <code>arduino</code> account and the board's mDNS name &mdash; that's the <code>&lt;hostname&gt;</code> you chose during App Lab setup, with a <code>.local</code> suffix:</p>
+        <div class="code-block"><pre><code>ssh arduino@&lt;hostname&gt;.local</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="note"><p>If <code>&lt;hostname&gt;.local</code> does not resolve on your network, substitute the IP you found above, for example <code>ssh arduino@192.168.1.50</code>. You can also add the board as a host in the VS Code <strong>Remote - SSH</strong> extension for full remote development.</p></div>
       </div>
     </div>
 
@@ -747,7 +764,7 @@ ip addr show wlan0</code></pre><button class="copy-btn" onclick="copyCode(this)"
         <p>Bring the device online and authenticate it to your tailnet. This needs <code>sudo</code> because it controls the daemon:</p>
         <div class="code-block"><pre><code>sudo tailscale up</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <p>The command prints a <code>https://login.tailscale.com/...</code> URL. Open it in any browser, log in with the same account from above, and approve the device. The Uno Q is now a node on your tailnet, reachable from your other devices by its Tailscale IP or MagicDNS name.</p>
-        <div class="note"><p>No <code>--ssh</code> flag needed: the Uno Q already runs its own SSH server (enabled by default, Step 1), so you connect to it with a plain <code>ssh</code> over the tailnet using the <code>arduino</code> account &mdash; no Tailscale SSH feature required.</p></div>
+        <div class="note"><p>No <code>--ssh</code> flag needed: the Uno Q already runs its own SSH server (enabled by default, Step 01), so you connect to it with a plain <code>ssh</code> over the tailnet using the <code>arduino</code> account &mdash; no Tailscale SSH feature required.</p></div>
         <p>Find the device's Tailscale address so you can reach it. Get the <code>100.x.y.z</code> Tailscale IP, or list all nodes and their names:</p>
         <div class="code-block"><pre><code>tailscale ip -4
 tailscale status</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -775,7 +792,7 @@ ssh arduino@100.x.y.z</code></pre><button class="copy-btn" onclick="copyCode(thi
 
     <div class="note"><p>The free Personal plan covers up to 100 devices &mdash; far more than enough here. For a headless device, disable key expiry in the admin console (Machines &gt; the device &gt; Disable key expiry) so the Uno Q stays reachable without periodic re-authentication.</p></div>
 
-    <div class="warning"><p>Any device on your tailnet can reach the Uno Q's SSH server, so it's only as private as your tailnet. Keep your tailnet to devices you own, secure your Tailscale login with 2FA, and make sure you changed the default <code>arduino</code> password back in Step 1.</p></div>
+    <div class="warning"><p>Any device on your tailnet can reach the Uno Q's SSH server, so it's only as private as your tailnet. Keep your tailnet to devices you own, secure your Tailscale login with 2FA, and make sure you changed the default <code>arduino</code> password back in Step 01.</p></div>
   </div>
 </section>
 
@@ -785,7 +802,7 @@ ssh arduino@100.x.y.z</code></pre><button class="copy-btn" onclick="copyCode(thi
     <span class="step-badge">04</span>
     <div class="step-titles">
       <h2>Install Claude Code + the cc Alias</h2>
-      <p class="step-sub">Install <a href="https://claude.ai/code">Claude Code</a>, Anthropic's official CLI, and wire up a one-letter <code>cc</code> shortcut.</p>
+      <p class="step-sub">Install <a href="https://claude.ai/code">Claude Code</a>, Anthropic's official CLI, and wire up a two-letter <code>cc</code> shortcut.</p>
     </div>
   </div>
   <div class="step-body">
@@ -814,17 +831,18 @@ ssh arduino@100.x.y.z</code></pre><button class="copy-btn" onclick="copyCode(thi
         <div class="code-block"><pre><code>claude</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <p>On a headless board with no browser handy, you can authenticate with an API key instead. Add it to <code>~/.bashrc</code> to make it persist.</p>
         <div class="code-block"><pre><code>export ANTHROPIC_API_KEY=sk-ant-...</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="warning"><p>This stores your API key in <strong>plaintext</strong> in <code>~/.bashrc</code>, readable by anything running as the <code>arduino</code> user. Prefer the interactive <code>claude</code> login above where you can; if you must use a key, treat it as a secret &mdash; don't commit <code>~/.bashrc</code> to git, and remember that anyone who gains shell access to the board can read it.</p></div>
       </div>
     </div>
     <div class="substep">
       <div class="substep-head"><span class="substep-num">4</span><h3>Add the cc alias</h3></div>
       <div class="substep-body">
-        <p>The <code>cc</code> alias launches Claude Code hands-off and remotely steerable. Try it in the current shell first.</p>
+        <p>The <code>cc</code> alias launches Claude Code in a hands-off, remotely steerable mode. Try it in the current shell first.</p>
         <div class="code-block"><pre><code>alias cc='claude --dangerously-skip-permissions --remote-control'</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <p>Then make it permanent by appending it to <code>~/.bashrc</code> and reloading.</p>
         <div class="code-block"><pre><code>echo "alias cc='claude --dangerously-skip-permissions --remote-control'" &gt;&gt; ~/.bashrc &amp;&amp; source ~/.bashrc</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <p>In plain terms: <code>--dangerously-skip-permissions</code> skips the interactive approval prompts before each file edit or command, which is handy on a headless board you control, and <code>--remote-control</code> lets you drive the session remotely (for example from the Claude mobile app) instead of only from the local terminal.</p>
-        <div class="warning"><p><code>--dangerously-skip-permissions</code> lets Claude read, modify, and run things without asking first. Only use it on a board you trust and control, never on a shared machine or untrusted network.</p></div>
+        <div class="warning"><p><code>--dangerously-skip-permissions</code> lets Claude read, modify, and run things without asking first. Only use it on a board you trust and control, never on a shared machine or untrusted network. Because the <code>arduino</code> account has <code>sudo</code>, this effectively lets Claude run anything as root &mdash; treat enabling it as handing over full control of the board.</p></div>
       </div>
     </div>
   </div>
@@ -856,7 +874,7 @@ ssh arduino@100.x.y.z</code></pre><button class="copy-btn" onclick="copyCode(thi
         <p>The Uno Q is <code>aarch64</code> (ARM64) &mdash; confirm with <code>uname -m</code>. The cleanest install on the Debian-based Uno Q image is the Cloudflare apt repository, which auto-selects the right architecture and gives you updates via <code>apt upgrade</code>.</p>
         <div class="code-block"><pre><code>sudo mkdir -p --mode=0755 /usr/share/keyrings
 curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg &gt;/dev/null
-echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
 sudo apt-get update &amp;&amp; sudo apt-get install -y cloudflared</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <p>If the apt repo is unavailable, download the ARM64 binary directly from GitHub instead.</p>
         <div class="code-block"><pre><code>curl -L --output cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64
