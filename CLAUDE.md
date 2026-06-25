@@ -31,9 +31,14 @@ sections style-free (no inline styles) so the theme stays consistent.
 ## Caveat — verify before trusting
 Some board-specific commands and the exact App Lab flow are best-effort from research and **not fully
 verified on real Uno Q hardware**. Sanity-check against an actual board before treating them as
-confirmed. Confirmed corrections so far: default user is `arduino`; **SSH is enabled by default** (no
-`openssh-server` install needed); the App Lab first-install update requires a reboot before Tailscale
-will install.
+confirmed. Confirmed corrections so far (from the board owner):
+- default user is `arduino`
+- **SSH is enabled by default** (no `openssh-server` install needed)
+- App Lab first-install update requires a reboot before Tailscale will install
+- Tailscale: **no `--ssh` flag** — use plain `sudo tailscale up`, then connect with normal
+  `ssh arduino@<magicdns-or-100.x.y.z>` over the tailnet (don't use the `tailscale ssh` command)
+- Claude Code install is the **native installer** `curl -fsSL https://claude.ai/install.sh | bash`
+  (the `npm install -g @anthropic-ai/claude-code` method is deprecated); binary lands in `~/.local/bin`
 
 ## Domain facts
 Board OS is Debian; default user is `arduino` (all SSH examples use `arduino@`). See recalled memory

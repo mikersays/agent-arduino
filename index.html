@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Arduino Uno Q — Full Setup Guide</title>
-  <meta name="description" content="A complete, step-by-step guide to setting up the Arduino Uno Q: App Lab onboarding, the required reboot, Tailscale SSH from anywhere, Claude Code, and a public Cloudflare Tunnel.">
+  <meta name="description" content="A complete, step-by-step guide to setting up the Arduino Uno Q: App Lab onboarding, the required reboot, SSH from anywhere via Tailscale, Claude Code, and a public Cloudflare Tunnel.">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -572,7 +572,7 @@
   <section class="hero">
     <h1>Arduino Uno Q — Full Setup Guide</h1>
     <p class="subtitle">
-      <b>App Lab</b> → <b>reboot</b> → <b>Tailscale SSH</b> → <b>Claude Code</b> → public <b>Cloudflare tunnel</b>.
+      <b>App Lab</b> → <b>reboot</b> → <b>Tailscale</b> → <b>Claude Code</b> → public <b>Cloudflare tunnel</b>.
     </p>
     <div class="meta-chips">
       <span>~30 min</span>
@@ -744,10 +744,10 @@ ip addr show wlan0</code></pre><button class="copy-btn" onclick="copyCode(this)"
       <div class="substep-body">
         <p>Install Tailscale with the official script. It auto-detects the Uno Q's CPU architecture (arm64/aarch64 or armhf) and the Debian/Ubuntu apt repo, then installs the <code>tailscale</code> CLI and the <code>tailscaled</code> daemon as a systemd service that starts on boot.</p>
         <div class="code-block"><pre><code>curl -fsSL https://tailscale.com/install.sh | sh</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <p>Bring the device online and authenticate it to your tailnet with Tailscale SSH enabled in one step. This needs <code>sudo</code> because it controls the daemon and binds the SSH server:</p>
-        <div class="code-block"><pre><code>sudo tailscale up --ssh</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <p>The command prints a <code>https://login.tailscale.com/...</code> URL. Open it in any browser, log in with the same account from above, and approve the device. The Uno Q is now a node on your tailnet and is opted in as a Tailscale SSH server.</p>
-        <div class="note"><p>If you already ran <code>sudo tailscale up</code> without <code>--ssh</code>, enable it afterward with no re-auth: <code>sudo tailscale set --ssh</code>.</p></div>
+        <p>Bring the device online and authenticate it to your tailnet. This needs <code>sudo</code> because it controls the daemon:</p>
+        <div class="code-block"><pre><code>sudo tailscale up</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>The command prints a <code>https://login.tailscale.com/...</code> URL. Open it in any browser, log in with the same account from above, and approve the device. The Uno Q is now a node on your tailnet, reachable from your other devices by its Tailscale IP or MagicDNS name.</p>
+        <div class="note"><p>No <code>--ssh</code> flag needed: the Uno Q already runs its own SSH server (enabled by default, Step 1), so you connect to it with a plain <code>ssh</code> over the tailnet using the <code>arduino</code> account &mdash; no Tailscale SSH feature required.</p></div>
         <p>Find the device's Tailscale address so you can reach it. Get the <code>100.x.y.z</code> Tailscale IP, or list all nodes and their names:</p>
         <div class="code-block"><pre><code>tailscale ip -4
 tailscale status</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -766,16 +766,16 @@ tailscale status</code></pre><button class="copy-btn" onclick="copyCode(this)">C
           <tr><td>Linux</td><td><code>curl -fsSL https://tailscale.com/install.sh | sh</code> then <code>sudo tailscale up</code></td></tr>
           <tr><td>iOS / Android</td><td>Install the Tailscale app from the App Store or Google Play</td></tr>
         </tbody></table>
-        <p>Confirm both the Uno Q and the client appear with <code>tailscale status</code>, then connect from anywhere. Tailscale SSH authenticates via your tailnet identity, so no SSH keys or passwords are required:</p>
-        <div class="code-block"><pre><code>tailscale ssh arduino@uno-q
-tailscale ssh arduino@100.x.y.z</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <p>A standard <code>ssh arduino@uno-q</code> also works over the tailnet once MagicDNS is on. If hostname resolution ever fails, just use the <code>100.x.y.z</code> Tailscale IP.</p>
+        <p>Confirm both the Uno Q and the client appear with <code>tailscale status</code>, then connect from anywhere with a normal SSH command &mdash; the tailnet makes the board reachable by its MagicDNS name or Tailscale IP:</p>
+        <div class="code-block"><pre><code>ssh arduino@uno-q
+ssh arduino@100.x.y.z</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Authenticate with the <code>arduino</code> account password (or an SSH key you've added). If MagicDNS hostname resolution ever fails, just use the <code>100.x.y.z</code> Tailscale IP.</p>
       </div>
     </div>
 
     <div class="note"><p>The free Personal plan covers up to 100 devices &mdash; far more than enough here. For a headless device, disable key expiry in the admin console (Machines &gt; the device &gt; Disable key expiry) so the Uno Q stays reachable without periodic re-authentication.</p></div>
 
-    <div class="warning"><p>Enabling Tailscale SSH lets any tailnet user permitted by your ACLs connect as the specified local user without a password. On a single-user personal tailnet that's only you, and the default ACL already allows your own devices to SSH to each other. Keep your tailnet private and secure your Tailscale login with 2FA.</p></div>
+    <div class="warning"><p>Any device on your tailnet can reach the Uno Q's SSH server, so it's only as private as your tailnet. Keep your tailnet to devices you own, secure your Tailscale login with 2FA, and make sure you changed the default <code>arduino</code> password back in Step 1.</p></div>
   </div>
 </section>
 
@@ -790,38 +790,25 @@ tailscale ssh arduino@100.x.y.z</code></pre><button class="copy-btn" onclick="co
   </div>
   <div class="step-body">
     <div class="substep">
-      <div class="substep-head"><span class="substep-num">1</span><h3>Install Node.js</h3></div>
+      <div class="substep-head"><span class="substep-num">1</span><h3>Install Claude Code</h3></div>
       <div class="substep-body">
-        <p>Claude Code is a Node.js package, so it runs the same on the Uno Q's ARM64 chip as on any x86 machine, as long as you have Node 18 or newer. The cleanest way on a board is <code>nvm</code>, which installs into your home directory and needs no <code>sudo</code>.</p>
-        <div class="code-block"><pre><code>curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-source ~/.bashrc
-nvm install --lts &amp;&amp; nvm use --lts</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <p>Prefer a system-wide install? Use <code>apt</code> instead, then check the version.</p>
-        <div class="code-block"><pre><code>sudo apt update &amp;&amp; sudo apt install -y nodejs npm
-node --version
-npm --version</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <div class="note"><p>The Debian/Ubuntu <code>apt</code> repos often ship an older Node. If <code>node --version</code> reports below 18, switch to <code>nvm</code> (above) or NodeSource. <code>nvm</code> also avoids the <code>EACCES</code> permission errors that <code>sudo npm install -g</code> tends to hit.</p></div>
+        <p>Use the official native installer &mdash; one command, no Node.js or npm required. It downloads a self-contained binary for the Uno Q's ARM64 architecture and drops it in <code>~/.local/bin</code>.</p>
+        <div class="code-block"><pre><code>curl -fsSL https://claude.ai/install.sh | bash</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Confirm it's on the box:</p>
+        <div class="code-block"><pre><code>claude --version</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="note"><p>The old <code>npm install -g @anthropic-ai/claude-code</code> method is deprecated &mdash; use the installer above. For a full environment health check, run <code>claude doctor</code>.</p></div>
       </div>
     </div>
     <div class="substep">
-      <div class="substep-head"><span class="substep-num">2</span><h3>Install Claude Code</h3></div>
+      <div class="substep-head"><span class="substep-num">2</span><h3>If the 'claude' command isn't found</h3></div>
       <div class="substep-body">
-        <p>Install the CLI globally from npm, then confirm it is on the box. With <code>nvm</code> this needs no <code>sudo</code>.</p>
-        <div class="code-block"><pre><code>npm install -g @anthropic-ai/claude-code
-claude --version</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-        <div class="note"><p>For a full environment health check, run <code>claude doctor</code>.</p></div>
-      </div>
-    </div>
-    <div class="substep">
-      <div class="substep-head"><span class="substep-num">3</span><h3>If the 'claude' command isn't found</h3></div>
-      <div class="substep-body">
-        <p>If running <code>claude</code> after installing gives <code>command not found</code>, the directory npm dropped the binary into isn't on your <code>PATH</code>. Add the local bin directory and reload your shell.</p>
+        <p>If running <code>claude</code> after installing gives <code>command not found</code>, the installer's <code>~/.local/bin</code> directory isn't on your <code>PATH</code>. Add it and reload your shell.</p>
         <div class="code-block"><pre><code>echo 'export PATH="$HOME/.local/bin:$PATH"' &gt;&gt; ~/.bashrc &amp;&amp; source ~/.bashrc</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
         <div class="note"><p>This appends <code>$HOME/.local/bin</code> to your <code>PATH</code> in <code>~/.bashrc</code> and reloads the shell so the <code>claude</code> command resolves immediately, and in every future terminal session.</p></div>
       </div>
     </div>
     <div class="substep">
-      <div class="substep-head"><span class="substep-num">4</span><h3>Authenticate</h3></div>
+      <div class="substep-head"><span class="substep-num">3</span><h3>Authenticate</h3></div>
       <div class="substep-body">
         <p>Run <code>claude</code> and follow the login prompt to sign in with a Claude.ai Pro/Max or Anthropic Console account.</p>
         <div class="code-block"><pre><code>claude</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -830,7 +817,7 @@ claude --version</code></pre><button class="copy-btn" onclick="copyCode(this)">C
       </div>
     </div>
     <div class="substep">
-      <div class="substep-head"><span class="substep-num">5</span><h3>Add the cc alias</h3></div>
+      <div class="substep-head"><span class="substep-num">4</span><h3>Add the cc alias</h3></div>
       <div class="substep-body">
         <p>The <code>cc</code> alias launches Claude Code hands-off and remotely steerable. Try it in the current shell first.</p>
         <div class="code-block"><pre><code>alias cc='claude --dangerously-skip-permissions --remote-control'</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -922,7 +909,7 @@ sudo systemctl enable --now cloudflared</code></pre><button class="copy-btn" onc
 
     <div class="done-banner">
       <h2>🎉 You're all set!</h2>
-      <p>Your Uno Q is updated, reachable over Tailscale SSH from anywhere, running Claude Code, and able to serve a public site through Cloudflare.</p>
+      <p>Your Uno Q is updated, reachable over SSH from anywhere via Tailscale, running Claude Code, and able to serve a public site through Cloudflare.</p>
       <ul class="recap">
         <li>App Lab onboarding &mdash; board online, SSH enabled</li>
         <li>Reboot &mdash; update fully applied</li>
