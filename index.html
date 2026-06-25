@@ -420,6 +420,32 @@
     .warning code { background: rgba(240,136,62,0.14); border-color: rgba(240,136,62,0.3); }
     .note strong, .warning strong { color: var(--text); }
 
+    /* ============ CLAUDE SHORTCUT CALLOUT ============ */
+    .claude-tip {
+      background: linear-gradient(180deg, rgba(240,136,62,0.10), rgba(240,136,62,0.035));
+      border: 1px solid rgba(240,136,62,0.35);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin: 4px 0 20px;
+    }
+    .claude-tip h4 {
+      margin: 0 0 10px;
+      font-size: 1.04rem;
+      color: var(--orange);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .claude-tip p { margin: 0 0 12px; color: #f0d8c4; font-size: 0.95rem; }
+    .claude-tip code { background: rgba(240,136,62,0.14); border-color: rgba(240,136,62,0.3); }
+    .claude-tip .warning { margin-bottom: 0; }
+    .code-block.prose code { white-space: pre-wrap; word-break: break-word; }
+    .or-manual {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin: 0 0 18px;
+      padding-top: 4px;
+    }
+
     /* ============ KV TABLE ============ */
     .kv-table {
       width: 100%;
@@ -890,6 +916,17 @@ ssh arduino@100.x.y.z</code></pre><button class="copy-btn" onclick="copyCode(thi
     </div>
   </div>
   <div class="step-body">
+
+    <div class="claude-tip">
+      <h4>⚡ Shortcut: let Claude Code do it</h4>
+      <p>You already installed Claude Code in <strong>Step 04</strong> &mdash; so instead of running the commands below by hand, you can just describe what you want and let it do the work. Launch it on the board (over your Tailscale SSH session):</p>
+      <div class="code-block"><pre><code>cc</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <p>Then ask, for example:</p>
+      <div class="code-block prose"><pre><code>Install cloudflared if it isn't already, then start a Cloudflare quick tunnel that exposes my local web server on http://localhost:8080 and print the public trycloudflare.com URL.</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <p>Claude runs the same steps documented below &mdash; confirming the architecture, installing <code>cloudflared</code>, and starting the tunnel &mdash; then hands you the public URL. Want it to survive reboots? Just add: <em>&ldquo;make it a persistent named tunnel running as a systemd service.&rdquo;</em></p>
+      <div class="warning"><p>The <code>cc</code> alias runs with <code>--dangerously-skip-permissions</code>, so Claude executes these <code>sudo</code> commands without stopping to ask. That's convenient on a board you control; if you'd rather approve each action, launch plain <code>claude</code> instead of <code>cc</code>.</p></div>
+    </div>
+    <p class="or-manual">Prefer to run it yourself, or want to understand each piece? Follow the manual steps below. &darr;</p>
 
     <div class="substep">
       <div class="substep-head"><span class="substep-num">1</span><h3>Start a local web server</h3></div>
