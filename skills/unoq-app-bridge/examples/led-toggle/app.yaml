@@ -1,0 +1,6 @@
+name: LED Toggle
+icon: 💡
+description: Python on the Linux side toggles the MCU's built-in LED once per second via the RouterBridge.
+
+# No bricks needed for this minimal example. Add `arduino:web_ui` to drive it from a browser.
+bricks: []
