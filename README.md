@@ -30,6 +30,7 @@ skill from the agent, delete its symlink in `~/.claude/skills/`.
 ## Quick start (standalone sketch)
 ```bash
 arduino-cli board list                                   # confirm: Arduino UNO Q  arduino:zephyr:unoq
+arduino-cli lib install Arduino_RouterBridge             # one-time Serial/bridge dependency
 arduino-cli compile -b arduino:zephyr:unoq ./skills/unoq-sketch/examples/matrix-heart
 arduino-cli upload  -b arduino:zephyr:unoq -p <board-ip> ./skills/unoq-sketch/examples/matrix-heart
 ```

@@ -22,6 +22,10 @@ Dragonwing, Debian — where you, the agent, are running) talks to the MCU over 
 A sketch lives in a folder whose name matches the `.ino` file (e.g. `blink/blink.ino`).
 
 ```bash
+# 0. One-time dependency check: the UNO Q core needs the real RouterBridge library
+#    for Serial support, even if the sketch does not call Serial directly.
+arduino-cli lib install Arduino_RouterBridge
+
 # 1. Compile
 arduino-cli compile -b arduino:zephyr:unoq ./blink
 
@@ -76,10 +80,11 @@ See `examples/blink/` and `examples/matrix-heart/` for complete, compile-tested 
 1. **`LED_BUILTIN` is active-low.** `digitalWrite(LED_BUILTIN, LOW)` turns it **on**.
 2. **The LED matrix is 13 wide × 8 tall (104 LEDs)** — *not* the 12×8 of the UNO R4. Pixel
    buffers passed to `matrix.draw()` must be exactly **104 bytes**.
-3. **`Serial` requires the bridge.** On this board `Serial` is routed through
-   `Arduino_RouterBridge`; the core errors at compile time if the library is outdated. Plain
-   `Serial.begin()/println()` works, but the monitor is reached via the board's network port or
-   `arduino-app-cli monitor`, not a classic USB COM port.
+3. **`Serial` requires the bridge library.** On this board `Serial` is routed through
+   `Arduino_RouterBridge`; the core can error at compile time if the real Library Manager package
+   is missing or outdated. Install/update it with `arduino-cli lib install Arduino_RouterBridge`.
+   Plain `Serial.begin()/println()` works, but the monitor is reached via the board's network port
+   or `arduino-app-cli monitor`, not a classic USB COM port.
 4. **Upload over network, not a COM port.** The MCU is flashed via the Linux side; always use
    `-p <board-ip>`.
 5. If a sketch needs to talk to Python/Linux (web UI, AI, files, network), it is no longer a
@@ -89,6 +94,7 @@ See `examples/blink/` and `examples/matrix-heart/` for complete, compile-tested 
 
 - `board not found` → `arduino-cli board list`; ensure you used the wlan0 IP and the board is on
   the network.
-- Compile error mentioning `Arduino_RouterBridge` / Serial → the core wants the bundled bridge
-  library; it ships in the core, so re-run `arduino-cli core list` and update `arduino:zephyr`.
+- Compile error mentioning `Arduino_RouterBridge` / Serial or a path under
+  `libraries/stubs/Arduino_RouterBridge.h` → install/update the real bridge package with
+  `arduino-cli lib install Arduino_RouterBridge`, then compile again.
 - No serial output → confirm `baudrate=115200` and that `Serial.begin(115200)` is in `setup()`.
