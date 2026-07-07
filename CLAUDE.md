@@ -66,6 +66,12 @@ COM ports, and the Zephyr/llext toolchain has linking quirks).
 5. Verify the full suite still compiles before shipping (loop `arduino-cli compile` over all
    sketch folders).
 
+## Maintenance backlog
+
+`MAINTENANCE.md` holds the prioritized, acceptance-criteria'd backlog for improving this repo.
+When asked to do repo maintenance (or when idle between tasks), work it top-down and keep it
+updated in the same commit as the work.
+
 ## Repo layout
 
 - `<sketch-name>/<sketch-name>.ino` — one folder per sketch, all at repo root, all
