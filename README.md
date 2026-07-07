@@ -25,6 +25,10 @@ Each skill has a `SKILL.md`, supporting `references/`, and compile-ready `exampl
 
 ## Sketch suite
 
+**Browse the catalog: [mikersays.github.io/agent-arduino](https://mikersays.github.io/agent-arduino/)**
+(GitHub Pages from `docs/` — when adding a sketch, add it to the `SKETCHES` array in
+`docs/index.html` as well as the tables below).
+
 Standalone MCU sketches, one folder each, all compile-verified on this board
 (`arduino-cli compile -b arduino:zephyr:unoq ./<folder>`). Upload any of them with
 `arduino-cli upload -b arduino:zephyr:unoq -p <board-ip> ./<folder>` — only one sketch runs

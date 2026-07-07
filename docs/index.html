@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arduino UNO Q Sketch Suite</title>
+<meta name="description" content="30 compile-verified sketches for the Arduino UNO Q — matrix effects, simulations, games, and serial-controlled tools, all built and reviewed on-device.">
+<style>
+/*
+  AGENTS: sketch data lives in the SKETCHES array at the bottom of this file.
+  To add a sketch: append one object there (and add a row to ../README.md).
+  Keep this page self-contained — no external fonts, scripts, or images.
+*/
+:root {
+  --bg: #0b1020;
+  --bg-soft: #121a30;
+  --card: #151f3a;
+  --card-edge: #243356;
+  --text: #e8eefc;
+  --text-dim: #9db0d6;
+  --led: #4da3ff;
+  --led-glow: rgba(77, 163, 255, .55);
+  --accent: #4da3ff;
+  --chip: #1d2b4e;
+  --code-bg: #0d1428;
+  --ok: #39d98a;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f7fc;
+    --bg-soft: #eaeefb;
+    --card: #ffffff;
+    --card-edge: #d8e0f2;
+    --text: #17223c;
+    --text-dim: #55648a;
+    --led: #1f7ae0;
+    --led-glow: rgba(31, 122, 224, .35);
+    --accent: #1f7ae0;
+    --chip: #e4ebfa;
+    --code-bg: #eef2fb;
+    --ok: #0d9f5f;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.55;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+/* ---------- hero ---------- */
+header {
+  background: radial-gradient(1200px 500px at 50% -10%, var(--bg-soft), var(--bg));
+  padding: 56px 0 40px;
+  text-align: center;
+}
+h1 { font-size: clamp(1.7rem, 4vw, 2.6rem); margin: 22px 0 10px; letter-spacing: -.02em; }
+.sub { color: var(--text-dim); max-width: 640px; margin: 0 auto; font-size: 1.05rem; }
+.sub b { color: var(--text); }
+
+/* the 13x8 LED matrix */
+.matrix {
+  display: grid;
+  grid-template-columns: repeat(13, 14px);
+  gap: 7px;
+  justify-content: center;
+  margin: 0 auto;
+  width: max-content;
+  padding: 18px 22px;
+  border-radius: 14px;
+  background: var(--bg-soft);
+  border: 1px solid var(--card-edge);
+}
+.matrix i {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--led);
+  opacity: .08;
+  transition: opacity .12s linear;
+}
+.matrix i.on { box-shadow: 0 0 10px var(--led-glow); }
+
+/* ---------- controls ---------- */
+.controls {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  justify-content: center; margin: 34px 0 8px;
+}
+.pill {
+  border: 1px solid var(--card-edge);
+  background: var(--card);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 7px 15px;
+  font-size: .9rem;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.pill:hover { color: var(--text); border-color: var(--accent); }
+.pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pill .n { opacity: .7; font-size: .8em; margin-left: 4px; }
+#search {
+  border: 1px solid var(--card-edge);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: .95rem;
+  min-width: 220px;
+  outline: none;
+}
+#search:focus { border-color: var(--accent); }
+
+/* ---------- cards ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 26px 0 10px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  border-radius: 14px;
+  padding: 18px 18px 15px;
+  display: flex; flex-direction: column; gap: 9px;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.card:hover { transform: translateY(-3px); border-color: var(--accent); }
+.card h3 { margin: 0; font-size: 1.06rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 600; }
+.card h3 a { color: var(--text); }
+.card p { margin: 0; color: var(--text-dim); font-size: .93rem; flex: 1; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: .72rem; letter-spacing: .03em;
+  background: var(--chip); color: var(--text-dim);
+  padding: 3px 9px; border-radius: 999px;
+}
+.chip.cat { color: var(--accent); font-weight: 600; }
+.chip.mx { color: var(--ok); }
+.cmds {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .78rem; color: var(--text-dim);
+  background: var(--code-bg);
+  border-radius: 8px; padding: 7px 10px;
+  overflow-x: auto; white-space: nowrap;
+}
+#empty { text-align: center; color: var(--text-dim); padding: 40px 0; display: none; }
+
+/* ---------- sections ---------- */
+section.info { padding: 30px 0 10px; }
+section.info h2 { font-size: 1.35rem; margin: 0 0 12px; }
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--card-edge);
+  border-radius: 12px;
+  padding: 16px 18px;
+  overflow-x: auto;
+  font-size: .88rem;
+  line-height: 1.6;
+}
+pre code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--text); }
+.dim { color: var(--text-dim); }
+footer {
+  margin-top: 44px; padding: 26px 0 40px;
+  border-top: 1px solid var(--card-edge);
+  color: var(--text-dim); font-size: .9rem; text-align: center;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="matrix" id="matrix" aria-hidden="true"></div>
+    <h1>Arduino UNO Q Sketch Suite</h1>
+    <p class="sub"><b id="count">30</b> compile-verified sketches for the UNO Q's STM32U585 microcontroller —
+    effects and games for the built-in <b>8×13 blue LED matrix</b>, plus serial-controlled tools you can
+    actually use. Every sketch was built, compiled, and adversarially reviewed <b>on the board itself</b>.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="controls" id="filters" role="toolbar" aria-label="Filter sketches">
+    <input id="search" type="search" placeholder="Search sketches…" aria-label="Search sketches">
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <p id="empty">No sketches match — try another search.</p>
+
+  <section class="info">
+    <h2>Run any of them</h2>
+    <pre><code><span class="dim"># On the board (or any machine with arduino-cli + the arduino:zephyr core)</span>
+arduino-cli compile -b arduino:zephyr:unoq ./matrix-snake
+arduino-cli upload  -b arduino:zephyr:unoq -p &lt;board-ip&gt; ./matrix-snake
+
+<span class="dim"># Serial-controlled applications: connect the monitor and type HELP</span>
+arduino-cli monitor -p &lt;board-ip&gt; -b arduino:zephyr:unoq -c baudrate=115200</code></pre>
+    <p class="dim">Only one sketch runs on the MCU at a time — uploading replaces the current one.
+    Running an agent on the board? The repo's <a href="https://github.com/mikersays/agent-arduino/tree/main/.claude/skills">project skills</a>
+    document a passwordless local flash path.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="https://github.com/mikersays/agent-arduino">github.com/mikersays/agent-arduino</a>
+    · built &amp; verified on-device by Claude, running on the UNO Q's Linux side
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   SKETCH DATA — agents: add new sketches HERE (one object each)
+   cat: effects | sims | games | apps | periph | rtos
+   mx:  true if it uses the 8x13 LED matrix
+   cmds: serial command summary (apps only, optional)
+   ============================================================ */
+const SKETCHES = [
+  {id:"matrix-light-show",  cat:"effects", mx:true,  d:"Eight-effect demo reel — orbiters, rain, sparkles, ripples, scanner, comet, waves, checkerboard — with smooth cross-fades."},
+  {id:"matrix-plasma",      cat:"effects", mx:true,  d:"Smooth ~30 fps plasma from four drifting sine fields; the M33's FPU makes sinf cheap."},
+  {id:"matrix-starfield",   cat:"effects", mx:true,  d:"3D starfield flying toward the viewer, brightness by depth, speed breathing between cruise and warp."},
+  {id:"matrix-lissajous",   cat:"effects", mx:true,  d:"Lissajous curve tracer with an antialiased head, decaying trails, and smooth transitions between frequency ratios."},
+  {id:"matrix-dvd-bounce",  cat:"effects", mx:true,  d:"The DVD screensaver — sub-pixel bouncing sprite, brightness patterns per bounce, perfect-corner-hit celebrations."},
+  {id:"matrix-text-scroller",cat:"effects",mx:true,  d:"Scrolling text marquee via ArduinoGraphics (Font_5x7), rotating messages including live uptime."},
+
+  {id:"matrix-fire",        cat:"sims",    mx:true,  d:"Classic doom fire: heat rises from the bottom row with random decay and jitter, cycling calm embers to raging blaze."},
+  {id:"matrix-life",        cat:"sims",    mx:true,  d:"Conway's Game of Life on a torus with fading ghost trails; reseeds itself on extinction or stagnation."},
+  {id:"matrix-sand",        cat:"sims",    mx:true,  d:"Falling sand from a wandering emitter — grains slide and settle, the pile dissolves, and it starts over."},
+  {id:"matrix-wave-pool",   cat:"sims",    mx:true,  d:"Real 2D wave-equation water: raindrops and stones ripple outward and reflect off the edges."},
+  {id:"matrix-rule-automata",cat:"sims",   mx:true,  d:"1D cellular-automaton waterfall cycling Wolfram rules 30/90/110/184/54 with fading history."},
+  {id:"matrix-maze-solver", cat:"sims",    mx:true,  d:"Endless show: carve a perfect maze, solve it with animated BFS, flash the shortest path, regenerate."},
+
+  {id:"matrix-snake",       cat:"games",   mx:true,  d:"Self-playing Snake — BFS pathfinding to the food, survival heuristic when boxed in."},
+  {id:"matrix-pong",        cat:"games",   mx:true,  d:"Self-playing Pong with fixed-point physics and imperfect AI paddles, so points actually get scored."},
+  {id:"matrix-breakout",    cat:"games",   mx:true,  d:"Self-playing Breakout — three brick rows, lives, levels, and a paddle AI that sometimes misses."},
+  {id:"matrix-invaders",    cat:"games",   mx:true,  d:"Self-playing Space Invaders — marching formation, bombs, and a cannon that dodges before it aims."},
+
+  {id:"matrix-marquee",     cat:"apps",    mx:true,  d:"Serial-controlled scrolling message board: set a persistent marquee, interject one-shot messages, tune the speed.", c:"TEXT <msg> · ONCE <msg> · SPEED <ms> · CLEAR"},
+  {id:"matrix-display-server",cat:"apps",  mx:true,  d:"Turns the board into a scriptable status display with OK/ERR replies — drive it from any script or CI job.", c:"BAR 75 · METER 40 80 · ROW/PIX/FILL · BLINK"},
+  {id:"pomodoro-timer",     cat:"apps",    mx:true,  d:"Self-running 25/5 Pomodoro desk timer — draining pixel field, pomodoro tally, pause/resume over serial.", c:"START · PAUSE · SKIP · WORK <min> · STATUS"},
+  {id:"visual-metronome",   cat:"apps",    mx:true,  d:"Silent musicians' metronome — drift-free anchored beats, sub-pixel pendulum, downbeat accents, tap tempo.", c:"BPM <n> · TS <n> · TAP · START/STOP"},
+  {id:"morse-beacon",       cat:"apps",    mx:true,  d:"Text-to-Morse transmitter and trainer with an ITU-verified table and timing; beacons from boot.", c:"SEND <text> · WPM <n> · REPEAT ON/OFF"},
+  {id:"analog-csv-logger",  cat:"apps",    mx:true,  d:"Streams clean CSV from A0–A5 for capture or the Serial Plotter; live bar meters with peak-hold.", c:"START/STOP · RATE <hz> · CH <mask> · VOLTS"},
+  {id:"dice-roller",        cat:"apps",    mx:true,  d:"Tabletop dice with rolling animations and pip faces — A0-noise entropy, bias-free rejection sampling.", c:"ROLL 2d6 · COIN · PICK <n> · AUTO ON"},
+  {id:"serial-stopwatch",   cat:"apps",    mx:true,  d:"Millisecond stopwatch and lap timer with a 20-lap table; seconds bar and binary minutes on the matrix.", c:"START · STOP · LAP · LAPS · RESET"},
+  {id:"square-wave-generator",cat:"apps",  mx:true,  d:"Two software square-wave channels on any D-pin (0.1–1000 Hz) with log sweep — a pocket signal generator.", c:"OUT 1 D9 100 50 · SWEEP · OFF · STATUS"},
+
+  {id:"matrix-analog-scope",cat:"periph",  mx:true,  d:"Scrolling oscilloscope of A0 with rolling auto-scale; plots floating-pin noise with nothing wired."},
+  {id:"rtc-matrix-clock",   cat:"periph",  mx:true,  d:"Binary-coded clock from the bundled RTC library, seeded from compile time, with a seconds heartbeat."},
+  {id:"i2c-scanner",        cat:"periph",  mx:false, d:"Scans the I²C/QWIIC bus every 5 s and prints a table of found addresses with known-device annotations."},
+  {id:"rgb-status-cycle",   cat:"periph",  mx:false, d:"Cycles the two MCU-driven RGB LEDs through complementary colors with an LED_BUILTIN heartbeat."},
+
+  {id:"zephyr-threads-demo",cat:"rtos",    mx:true,  d:"The board's signature trick: two k_thread_create threads animate matrix halves under a Zephyr mutex."},
+];
+
+const CATS = {
+  all:    "All",
+  effects:"Effects",
+  sims:   "Simulations",
+  games:  "Games",
+  apps:   "Applications",
+  periph: "Peripherals",
+  rtos:   "Zephyr RTOS",
+};
+const REPO = "https://github.com/mikersays/agent-arduino/tree/main/";
+
+/* ---------- render ---------- */
+const grid = document.getElementById("grid");
+const filters = document.getElementById("filters");
+const search = document.getElementById("search");
+const empty = document.getElementById("empty");
+let activeCat = "all";
+
+document.getElementById("count").textContent = SKETCHES.length;
+
+for (const [key, label] of Object.entries(CATS)) {
+  const n = key === "all" ? SKETCHES.length : SKETCHES.filter(s => s.cat === key).length;
+  const b = document.createElement("button");
+  b.className = "pill" + (key === "all" ? " active" : "");
+  b.innerHTML = `${label}<span class="n">${n}</span>`;
+  b.onclick = () => {
+    activeCat = key;
+    filters.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+    b.classList.add("active");
+    render();
+  };
+  filters.insertBefore(b, search);
+}
+
+function render() {
+  const q = search.value.trim().toLowerCase();
+  grid.innerHTML = "";
+  let shown = 0;
+  for (const s of SKETCHES) {
+    if (activeCat !== "all" && s.cat !== activeCat) continue;
+    if (q && !(s.id + " " + s.d + " " + (s.c || "")).toLowerCase().includes(q)) continue;
+    shown++;
+    const card = document.createElement("article");
+    card.className = "card";
+    card.innerHTML =
+      `<h3><a href="${REPO}${s.id}">${s.id}</a></h3>` +
+      `<p>${s.d}</p>` +
+      (s.c ? `<div class="cmds">${s.c}</div>` : "") +
+      `<div class="chips"><span class="chip cat">${CATS[s.cat]}</span>` +
+      (s.mx ? `<span class="chip mx">8×13 matrix</span>` : "") +
+      (s.c ? `<span class="chip">serial commands</span>` : "") + `</div>`;
+    grid.appendChild(card);
+  }
+  empty.style.display = shown ? "none" : "block";
+}
+search.addEventListener("input", render);
+render();
+
+/* ---------- hero: a real plasma on a 13x8 "matrix" ---------- */
+const M = document.getElementById("matrix");
+const W = 13, H = 8, dots = [];
+for (let i = 0; i < W * H; i++) {
+  const d = document.createElement("i");
+  M.appendChild(d);
+  dots.push(d);
+}
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function frame(tms) {
+  const t = tms * 0.0012;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      let v = Math.sin(x * 0.55 + t) + Math.sin(y * 0.7 - t * 0.8)
+            + Math.sin((x + y) * 0.4 + t * 0.5)
+            + Math.sin(Math.hypot(x - 6, y - 3.5) * 0.9 - t);
+      const b = Math.max(0, Math.min(1, (v + 4) / 8));
+      const d = dots[y * W + x];
+      d.style.opacity = (0.06 + b * 0.94).toFixed(2);
+      d.classList.toggle("on", b > 0.62);
+    }
+  }
+  if (!reduced) requestAnimationFrame(frame);
+}
+frame(reduced ? 4200 : 0);
+</script>
+</body>
+</html>

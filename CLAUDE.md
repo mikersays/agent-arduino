@@ -54,7 +54,11 @@ COM ports, and the Zephyr/llext toolchain has linking quirks).
    machine by hand; hunt uint8_t underflow, signed/unsigned traps, off-by-one at x=12/y=7,
    millis()/micros() rollover, out-of-bounds frame writes, pause/resume double-counting,
    parser overflow. Real bugs were found this way in ~1 of 3 sketches, always by tracing.
-4. Add the sketch to the README table in the right section.
+4. Add the sketch to the README table in the right section, AND add one entry to the
+   `SKETCHES` array in `docs/index.html` — that file is the GitHub Pages catalog and must
+   list every sketch (it also documents its own update procedure in a comment at the top).
+   New skills likewise: update the README skills table and mention notable capabilities on
+   the Pages site if user-facing.
 5. Verify the full suite still compiles before shipping (loop `arduino-cli compile` over all
    sketch folders).
 
