@@ -15,7 +15,8 @@ Dragonwing, Debian — where you, the agent, are running) talks to the MCU over 
   normal Arduino API.
 - **FQBN:** `arduino:zephyr:unoq`
 - **This board's IP (upload target):** the board appears to `arduino-cli` as a *network port* at
-  its own address. Find it with `ip -brief addr show wlan0` (currently `192.168.1.170`).
+  its own address. The address is DHCP-assigned and **changes between sessions** — never reuse a
+  remembered one; check with `ip -brief addr show wlan0` (or `arduino-cli board list`).
 
 ## The 30-second workflow
 
@@ -26,22 +27,47 @@ A sketch lives in a folder whose name matches the `.ino` file (e.g. `blink/blink
 #    for Serial support, even if the sketch does not call Serial directly.
 arduino-cli lib install Arduino_RouterBridge
 
-# 1. Compile
-arduino-cli compile -b arduino:zephyr:unoq ./blink
+# 1. Compile (the explicit --build-path is where step 2 finds the binary)
+arduino-cli compile -b arduino:zephyr:unoq --build-path /tmp/build-blink ./blink
 
-# 2. Upload to THIS board over the network (use the board's own wlan0 IP)
-arduino-cli upload -b arduino:zephyr:unoq -p 192.168.1.170 ./blink
+# 2. Flash — preferred path when running ON the board (non-interactive, no password):
+PLAT=~/.arduino15/packages/arduino/hardware/zephyr/0.56.0
+~/.arduino15/packages/arduino/tools/remoteocd/0.1.1/remoteocd upload \
+  -f $PLAT/variants/arduino_uno_q_stm32u585xx/flash_sketch.cfg \
+  $PLAT/firmwares/zephyr-arduino_uno_q_stm32u585xx.elf \
+  /tmp/build-blink/blink.ino.elf-zsk.bin
+#   (arg 1 = Zephyr firmware, only rewritten if changed; arg 2 = your sketch binary)
+
+# 2-alt. Network upload (from another machine, or if you know the board password):
+#   Prompts for the board's SSH password — FAILS in non-interactive sessions
+#   unless you pass it with -F password=<pw>.
+arduino-cli upload -b arduino:zephyr:unoq -p <board-wlan0-ip> ./blink
 
 # 3. Watch MCU serial output
-arduino-cli monitor -p 192.168.1.170 -b arduino:zephyr:unoq -c baudrate=115200
+arduino-cli monitor -p <board-wlan0-ip> -b arduino:zephyr:unoq -c baudrate=115200
 #   (or: arduino-app-cli monitor)
 ```
 
 Confirm the board is detected first with `arduino-cli board list` — it should print
 `Arduino UNO Q  arduino:zephyr:unoq`.
 
-> Tip: `arduino-cli compile --clean` if you hit stale-build weirdness. Builds for the Zephyr
-> core are slower than classic AVR — expect tens of seconds.
+> Tip: `arduino-cli compile --clean` if you hit stale-build weirdness. The first Zephyr-core
+> build takes tens of seconds; later builds reuse the shared core cache (~5 s).
+>
+> **Parallel compiles clash**: concurrent `arduino-cli compile` runs can collide on the shared
+> build cache and fail with a spurious `exit status 1`. When compiling several sketches at once,
+> give each its own `--build-path`; a clean re-run also recovers.
+
+## Working examples to crib from
+
+This repo (`/home/arduino/agent-arduino/`) contains **21 compile-verified sketches** for this
+exact board — games with fixed-point physics (`matrix-pong`, `matrix-breakout`,
+`matrix-invaders`, `matrix-snake`), buffer simulations (`matrix-fire`, `matrix-wave-pool`,
+`matrix-sand`, `matrix-life`), float effects (`matrix-plasma`, `matrix-lissajous`,
+`matrix-starfield`), peripherals (`i2c-scanner`, `rtc-matrix-clock`, `rgb-status-cycle`), and
+Zephyr threading (`zephyr-threads-demo`). Match their style: non-blocking `millis()` pacing with
+the rollover-safe subtraction pattern, LCG randomness, bounds-guarded `setPixel` helpers, and a
+header comment with compile/upload commands.
 
 ## Built-in hardware you can use immediately
 
@@ -90,6 +116,19 @@ See `examples/blink/` and `examples/matrix-heart/` for complete, compile-tested 
 5. If a sketch needs to talk to Python/Linux (web UI, AI, files, network), it is no longer a
    standalone sketch — switch to the **unoq-app-bridge** skill.
 
+## Zephyr/llext compile gotchas (all hit in practice on this board)
+
+- **Some libc/newlib symbols don't link** in the llext environment even though they compile:
+  `strtok_r` is missing (write a manual tokenizer), and libm functions that touch `errno`
+  (e.g. `powf`) need a stub: `extern "C" int *__errno(void) { static int e; return &e; }`.
+- **Arduino auto-prototypes vs your types**: generated prototypes are emitted *before* your
+  `enum`/`struct` definitions, so a function taking a user-defined type (or reference to one)
+  as a parameter fails to compile. Use built-in types in function signatures (pass an index or
+  `uint8_t` instead of `MyEnum`/`Channel&`), or add an explicit forward declaration after the
+  type definition.
+- **Macro collisions**: common ALL-CAPS names like `LINE_MAX` are libc macros — pick another
+  name if you get a bizarre redefinition error.
+
 ## When something fails
 
 - `board not found` → `arduino-cli board list`; ensure you used the wlan0 IP and the board is on
@@ -98,3 +137,7 @@ See `examples/blink/` and `examples/matrix-heart/` for complete, compile-tested 
   `libraries/stubs/Arduino_RouterBridge.h` → install/update the real bridge package with
   `arduino-cli lib install Arduino_RouterBridge`, then compile again.
 - No serial output → confirm `baudrate=115200` and that `Serial.begin(115200)` is in `setup()`.
+- `arduino-cli upload` fails with `Error getting user input: user input not supported in non
+  interactive mode` → the network upload prompts for the board's SSH password. Use the
+  passwordless local `remoteocd` flash from step 2 of the workflow above instead, or pass
+  `-F password=<pw>`.

@@ -40,14 +40,23 @@ Browse real bricks/examples on the device: `/var/lib/arduino-app-cli/examples/`.
 ## Managing apps (on-device CLI)
 
 ```bash
-arduino-app-cli app new            # scaffold a new app (interactive)
-arduino-app-cli app list           # list apps
-arduino-app-cli app start  <name>  # build sketch + run python (also: restart, stop)
-arduino-app-cli app logs   <name>  # tail the python logs
-arduino-app-cli monitor            # attach to the MCU serial monitor
-arduino-app-cli app import/export  # share apps as zip
+# scaffold non-interactively: name + flags (-b brick, -d description, -i icon, --no-sketch)
+arduino-app-cli app new my-app -d "What it does" -b arduino:web_ui
+arduino-app-cli app list                # list apps (IDs like examples:blink)
+arduino-app-cli app start  <app_path>   # build sketch + run python (also: restart, stop)
+arduino-app-cli app logs   <app_path> --follow   # tail the python logs (--all for everything)
+arduino-app-cli monitor                 # attach to the MCU serial monitor
+arduino-app-cli app import/export       # share apps as zip
+arduino-app-cli brick list              # all available bricks (web_ui, streamlit_ui,
+                                        #   cloud_llm, object_detection, dbstorage_*, …)
 ```
+`start`/`stop`/`logs` take the app's **path** (e.g. `./my-app`), not just its name.
 Starting an app compiles & flashes the `sketch/` to the MCU and launches `python/main.py`.
+
+**Where the Python actually runs:** inside a Docker container
+(`ghcr.io/arduino/app-bricks/python-apps-base`) managed by the daemon — `arduino.app_utils` is
+NOT importable in the host's python3, so don't debug by importing on the host; use
+`app start` + `app logs --follow`.
 
 ## The Bridge RPC model
 

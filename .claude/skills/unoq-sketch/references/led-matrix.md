@@ -81,6 +81,11 @@ The on-device example app **led-matrix-painter**
 and export them as the `uint32_t[][5]` C arrays above. For ad-hoc art, fill a 104-byte buffer and
 use `draw()` — it's the simplest path.
 
+**18 compile-verified matrix sketches** live in this repo (`/home/arduino/agent-arduino/`),
+covering the grayscale-buffer pattern (`matrix-fire`, `matrix-life`, `matrix-plasma`, games…)
+and the ArduinoGraphics text path (`matrix-text-scroller`). Start from one of those rather than
+from scratch.
+
 ## Gotchas
 - **104 bytes exactly** for `draw()`. Wrong length = garbage/overrun.
 - It's a **blue** matrix; the R/G/B args are really just brightness — non-zero = on.

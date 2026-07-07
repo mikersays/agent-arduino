@@ -12,10 +12,16 @@
 Sketches (this skill) target the **MCU**. The two sides talk via `Arduino_RouterBridge`
 (see the unoq-app-bridge skill).
 
-## On-board LEDs
-- **8×13 blue LED matrix (104 LEDs)** — driven by the MCU. See `led-matrix.md`.
-- **4 RGB LEDs** — 2 controlled by the Qualcomm MPU (Linux side), 2 by the STM32 MCU (sketch side).
-- **`LED_BUILTIN`** — **active LOW**: `digitalWrite(LED_BUILTIN, LOW)` turns it ON.
+## On-board LEDs — who controls what
+- **8×13 blue LED matrix (104 LEDs)** — MCU (sketches). See `led-matrix.md`.
+- **RGB LEDs 3 and 4** — MCU (sketches), via variant pin macros `LED3_R/G/B`, `LED4_R/G/B`
+  (plain digital pins; assume active-low like `LED_BUILTIN` — see `rgb-status-cycle/` in the
+  repo for a working example).
+- **RGB LEDs 1 and 2** — Linux side (NOT reachable from sketches): sysfs at
+  `/sys/class/leds/unoq:user-{red,green,blue}1` (free for use) and
+  `unoq:{bt-blue,panic-red,wlan-green}2` (system-status roles). See the **unoq-linux-hardware**
+  skill.
+- **`LED_BUILTIN`** — MCU, **active LOW**: `digitalWrite(LED_BUILTIN, LOW)` turns it ON.
 
 ## Pins
 The board exposes the **standard Arduino UNO header**: digital `D0`–`D13` and analog `A0`–`A5`,
