@@ -36,7 +36,9 @@ COM ports, and the Zephyr/llext toolchain has linking quirks).
 ## House style for sketches (see any existing sketch — they all follow it)
 
 - Header comment: what it does, hardware needed (or "no external hardware needed"), exact
-  compile + upload commands.
+  compile + upload commands. **The first comment line doubles as the sketch's description in
+  the `./flash` CLI** (auto-discovered — no registration step), so make it a clean, informative
+  one-liner: lead with what the sketch does, not the filename or board name.
 - Non-blocking `loop()` paced by the rollover-safe pattern `now - last >= interval` (unsigned
   subtraction). No long `delay()`s except where a library forces it (document that).
 - Deterministic LCG for randomness; constants over magic numbers; bounds-guarded `setPixel`
@@ -57,6 +59,8 @@ COM ports, and the Zephyr/llext toolchain has linking quirks).
 4. Add the sketch to the README table in the right section, AND add one entry to the
    `SKETCHES` array in `docs/index.html` — that file is the GitHub Pages catalog and must
    list every sketch (it also documents its own update procedure in a comment at the top).
+   The `./flash` CLI needs no registration (it auto-discovers), but run `./flash --list`
+   and check your sketch's description line reads well — fix the header comment if not.
    New skills likewise: update the README skills table and mention notable capabilities on
    the Pages site if user-facing.
 5. Verify the full suite still compiles before shipping (loop `arduino-cli compile` over all

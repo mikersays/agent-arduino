@@ -1,0 +1,643 @@
+#!/usr/bin/env python3
+"""
+flash — pick an Arduino sketch from this repo and flash it to the UNO Q's
+STM32U585 microcontroller.
+
+Sketches are AUTO-DISCOVERED: every folder at the repo root that contains a
+matching <name>/<name>.ino is a flashable sketch. Its one-line description is
+distilled from the sketch's header comment: the tool strips boilerplate (the
+"<name>.ino" filename token and bare "Arduino UNO Q (STM32U585 ...)" banner
+lines, section labels, rule lines) and takes the first genuinely descriptive
+sentence, joining wrapped continuation lines. So onboarding a new sketch is
+zero-config: create the folder, give it a header comment whose first real line
+says what the sketch does, and it shows up here automatically.
+
+Flash pipeline (proven on this board; do not substitute another):
+  1. arduino-cli compile -b arduino:zephyr:unoq --build-path <cache> ./<name>
+  2. remoteocd upload ... <cache>/<name>.ino.elf-zsk.bin   (local, passwordless)
+
+Usage:
+  ./flash                 interactive picker (curses, arrow/j-k keys, / filter)
+  ./flash <name>          flash that sketch directly
+  ./flash --list | -l     print an aligned name/description table and exit
+  ./flash --compile-only  compile the chosen sketch but skip the flash step
+  ./flash --yes | -y      skip the confirmation prompt
+  ./flash --help | -h     this help
+
+Python3 stdlib only. No pip dependencies.
+"""
+
+import glob
+import os
+import re
+import shutil
+import subprocess
+import sys
+
+# ---------------------------------------------------------------------------
+# Paths / discovery
+# ---------------------------------------------------------------------------
+
+REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+CACHE_ROOT = os.path.expanduser("~/.cache/unoq-flash")
+FQBN = "arduino:zephyr:unoq"
+VARIANT = "arduino_uno_q_stm32u585xx"
+SKIP_DIRS = {"docs"}
+
+
+class Sketch:
+    def __init__(self, name, path, description):
+        self.name = name
+        self.path = path            # <repo>/<name>
+        self.ino = os.path.join(path, name + ".ino")
+        self.description = description
+
+    @property
+    def cache_dir(self):
+        return os.path.join(CACHE_ROOT, self.name)
+
+    @property
+    def bin_path(self):
+        return os.path.join(self.cache_dir, self.name + ".ino.elf-zsk.bin")
+
+
+# Whole-line "Arduino UNO Q (STM32U585 MCU side)" banner (pure boilerplate).
+_BOARD_RE = re.compile(
+    r'^(?:the\s+)?(?:arduino\s+)?uno\s+q\b\s*(?:\([^)]*\))?\s*[.:]*\s*$', re.I)
+# A leading "Arduino UNO Q ..." / "UNO Q ..." noise prefix on a description.
+_BOARD_PREFIX_RE = re.compile(
+    r'^(?:the\s+)?(?:arduino\s+)?uno\s+q\b\s*(?:\([^)]*\))?\s*[—:–-]*\s*',
+    re.I)
+# A section-heading label line like "What it does:".
+_SECTION_RE = re.compile(r'^[A-Za-z][\w ]*:$')
+# A decorative rule line like "--------" or "========".
+_DECOR_RE = re.compile(r'^[-=*_~─—]{3,}$')
+# A board/MCU-identifier parenthetical, e.g. "(STM32U585 MCU side)" — noise.
+_BOARD_PAREN_RE = re.compile(r'\s*\([^)]*(?:STM32U585|MCU side)[^)]*\)', re.I)
+# End of a sentence (a period/!/? followed by whitespace or end-of-string).
+# The look-ahead skips decimals like "0.1" and mid-token dots.
+_SENT_END_RE = re.compile(r'[.!?](?=\s|$)')
+# Leading separators after the filename token: whitespace / dashes / colon.
+_LEAD_SEP_RE = re.compile(r'^[\s—–:-]+')
+
+
+def _header_comment_lines(ino_path):
+    """Content lines of the sketch's leading header comment.
+
+    Returns the text of each header-comment line with the // or /* * */
+    markers stripped; blank lines inside the comment are kept as "" so the
+    caller can see paragraph breaks. Stops at the end of the first comment.
+    """
+    try:
+        with open(ino_path, "r", errors="replace") as fh:
+            src = fh.read().splitlines()
+    except OSError:
+        return []
+    out = []
+    in_block = False
+    started = False
+    for raw in src:
+        line = raw.strip()
+        if in_block:
+            if not line:
+                out.append("")
+                continue
+            end = line.find("*/")
+            body = line[:end] if end != -1 else line
+            out.append(body.lstrip("*").strip())
+            if end != -1:
+                in_block = False
+                break
+            continue
+        if not line:
+            if started:
+                out.append("")
+            continue
+        if line.startswith("//"):
+            started = True
+            out.append(line[2:].strip())
+            continue
+        if line.startswith("/*"):
+            started = True
+            rest = line[2:]
+            end = rest.find("*/")
+            if end != -1:
+                out.append(rest[:end].lstrip("*").strip())
+                break
+            out.append(rest.lstrip("*").strip())
+            in_block = True
+            continue
+        # first non-empty line is not a comment — no header description
+        break
+    return out
+
+
+def _describe(name, lines):
+    """Distil a clean human description from header-comment lines.
+
+    Skips boilerplate first lines (the "<name>.ino" filename token, a bare
+    "Arduino UNO Q (STM32U585 ...)" banner, section labels, rule lines) and
+    returns the first genuinely descriptive sentence, joining wrapped
+    continuation lines up to the first sentence end.
+    """
+    fname_re = re.compile(r'^' + re.escape(name) + r'\.ino\b', re.I)
+
+    def is_boundary(t):
+        return not t or bool(_DECOR_RE.match(t)) or bool(_SECTION_RE.match(t))
+
+    n = len(lines)
+    start = None
+    cand = ""
+    for i in range(n):
+        t = lines[i]
+        if not t:
+            continue
+        c = _LEAD_SEP_RE.sub("", fname_re.sub("", t).strip())
+        # Skip pure boilerplate / labels / rules — fall through to next line.
+        if (not c or _BOARD_RE.match(c) or _DECOR_RE.match(c)
+                or _SECTION_RE.match(c)):
+            continue
+        # Strip a leading "Arduino UNO Q" noise prefix, keeping the real subject.
+        m = _BOARD_PREFIX_RE.match(c)
+        if m and c[m.end():].strip():
+            c = c[m.end():].strip()
+            c = c[0].upper() + c[1:]
+        start = i
+        cand = c
+        break
+    if start is None:
+        return ""
+
+    parts = [cand]
+    j = start + 1
+    while j < n and not is_boundary(lines[j]):
+        if _SENT_END_RE.search(" ".join(parts)):
+            break
+        parts.append(lines[j].strip())
+        j += 1
+    text = re.sub(r'\s+', ' ', " ".join(parts)).strip()
+    text = _BOARD_PAREN_RE.sub("", text).strip()
+    m = _SENT_END_RE.search(text)
+    if m:
+        text = text[:m.end()].strip()
+    return text
+
+
+def _extract_description(ino_path, name):
+    """Human description for a sketch (see _describe)."""
+    return _describe(name, _header_comment_lines(ino_path))
+
+
+def discover_sketches():
+    sketches = []
+    for entry in sorted(os.listdir(REPO_ROOT)):
+        if entry.startswith(".") or entry in SKIP_DIRS:
+            continue
+        d = os.path.join(REPO_ROOT, entry)
+        if not os.path.isdir(d):
+            continue
+        ino = os.path.join(d, entry + ".ino")
+        if not os.path.isfile(ino):
+            continue
+        sketches.append(Sketch(entry, d, _extract_description(ino, entry)))
+    return sketches
+
+
+# ---------------------------------------------------------------------------
+# Color / output helpers
+# ---------------------------------------------------------------------------
+
+_COLOR = sys.stdout.isatty()
+
+
+def _c(code, text):
+    if not _COLOR:
+        return text
+    return "\033[%sm%s\033[0m" % (code, text)
+
+
+def green(t): return _c("32", t)
+def red(t): return _c("31;1", t)
+def yellow(t): return _c("33", t)
+def dim(t): return _c("2", t)
+def bold(t): return _c("1", t)
+
+
+def err(msg):
+    sys.stderr.write(red("error: ") + msg + "\n")
+
+
+def term_width(default=80):
+    try:
+        return shutil.get_terminal_size((default, 24)).columns
+    except Exception:
+        return default
+
+
+# ---------------------------------------------------------------------------
+# Toolchain discovery / preflight
+# ---------------------------------------------------------------------------
+
+def _highest_version_glob(pattern):
+    """Return the path from `pattern` whose version-dir sorts highest."""
+    matches = glob.glob(pattern)
+    if not matches:
+        return None
+
+    def keyfn(p):
+        # extract the version directory that sits at the '*' in the glob
+        m = re.search(r"(\d+)\.(\d+)\.(\d+)", p)
+        return tuple(int(x) for x in m.groups()) if m else (0, 0, 0)
+
+    return sorted(matches, key=keyfn)[-1]
+
+
+def find_platform_dir():
+    base = os.path.expanduser(
+        "~/.arduino15/packages/arduino/hardware/zephyr/*/")
+    return _highest_version_glob(base)
+
+
+def find_remoteocd():
+    base = os.path.expanduser(
+        "~/.arduino15/packages/arduino/tools/remoteocd/*/remoteocd")
+    return _highest_version_glob(base)
+
+
+def preflight(need_flash=True):
+    """Check that the toolchain exists; return (platform_dir, remoteocd)."""
+    if not shutil.which("arduino-cli"):
+        err("arduino-cli not found on PATH. Install it before flashing.")
+        sys.exit(1)
+
+    plat = find_platform_dir()
+    if not plat:
+        err("Zephyr core not found. Install with:\n"
+            "  arduino-cli core install arduino:zephyr")
+        sys.exit(1)
+
+    remoteocd = None
+    if need_flash:
+        remoteocd = find_remoteocd()
+        if not remoteocd:
+            err("remoteocd tool not found under "
+                "~/.arduino15/packages/arduino/tools/remoteocd/*/. "
+                "Reinstall the arduino:zephyr core.")
+            sys.exit(1)
+    return plat, remoteocd
+
+
+# ---------------------------------------------------------------------------
+# Compile + flash
+# ---------------------------------------------------------------------------
+
+def compile_sketch(sketch):
+    try:
+        os.makedirs(sketch.cache_dir, exist_ok=True)
+    except OSError as e:
+        err("cannot create build cache %s: %s" % (sketch.cache_dir, e))
+        sys.exit(1)
+    print(bold("Compiling ") + sketch.name +
+          dim("  (cache: %s)" % sketch.cache_dir))
+    cmd = [
+        "arduino-cli", "compile",
+        "-b", FQBN,
+        "--build-path", sketch.cache_dir,
+        os.path.join(".", os.path.basename(sketch.path)),
+    ]
+    proc = subprocess.run(
+        cmd, cwd=REPO_ROOT,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+    if proc.returncode != 0:
+        err("compile failed. Last lines of output:")
+        tail = (proc.stdout or "").rstrip().splitlines()[-15:]
+        for line in tail:
+            sys.stderr.write("  " + line + "\n")
+        sys.exit(1)
+
+    # Surface the flash/RAM usage lines on success.
+    for line in (proc.stdout or "").splitlines():
+        low = line.lower()
+        if "program storage" in low or "dynamic memory" in low \
+                or "bytes" in low and ("flash" in low or "ram" in low):
+            print(dim(line.rstrip()))
+    print(green("Compiled OK."))
+    return True
+
+
+def flash_sketch(sketch, plat, remoteocd):
+    if not os.path.isfile(sketch.bin_path):
+        err("expected binary not found: %s" % sketch.bin_path)
+        sys.exit(1)
+    cfg = os.path.join(plat, "variants", VARIANT, "flash_sketch.cfg")
+    core_elf = os.path.join(
+        plat, "firmwares", "zephyr-%s.elf" % VARIANT)
+    for p in (cfg, core_elf):
+        if not os.path.isfile(p):
+            err("missing toolchain file: %s" % p)
+            sys.exit(1)
+
+    print(bold("Flashing ") + sketch.name + " to STM32U585 ...")
+    cmd = [remoteocd, "upload", "-f", cfg, core_elf, sketch.bin_path]
+    proc = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+    out = proc.stdout or ""
+    ok = proc.returncode == 0 and "shutdown command invoked" in out
+    # "verify failed in bank" is EXPECTED (sketch region rewritten) — not fatal.
+    if not ok:
+        err("flash failed. remoteocd output:")
+        tail = out.rstrip().splitlines()[-15:]
+        for line in tail:
+            sys.stderr.write("  " + line + "\n")
+        sys.exit(1)
+    print(green("Flashed %s successfully." % sketch.name))
+
+
+def current_ip():
+    try:
+        out = subprocess.check_output(
+            ["ip", "-brief", "addr", "show", "wlan0"],
+            universal_newlines=True)
+        for tok in out.split():
+            if "." in tok and "/" in tok:
+                return tok.split("/")[0]
+    except Exception:
+        pass
+    return None
+
+
+def report_success(sketch):
+    ip = current_ip()
+    where = ip if ip else "<board-ip>"
+    print()
+    print(green("Done: ") + sketch.name)
+    print(dim("Serial monitor:"))
+    print("  arduino-cli monitor -p %s -b %s -c baudrate=115200"
+          % (where, FQBN))
+    if not ip:
+        print(dim("  (could not read wlan0 IP; substitute the board's IP)"))
+
+
+# ---------------------------------------------------------------------------
+# Listing / selection UI
+# ---------------------------------------------------------------------------
+
+def print_list(sketches):
+    if not sketches:
+        print("No sketches found.")
+        return
+    width = max(len(s.name) for s in sketches)
+    avail = term_width() - width - 3
+    if avail < 10:
+        avail = 10
+    for s in sketches:
+        desc = s.description or ""
+        if len(desc) > avail:
+            desc = desc[:avail - 1] + "…"
+        print("%s  %s" % (s.name.ljust(width), dim(desc)))
+
+
+def suggest(name, sketches):
+    import difflib
+    names = [s.name for s in sketches]
+    return difflib.get_close_matches(name, names, n=1, cutoff=0.4)
+
+
+def find_sketch(name, sketches):
+    for s in sketches:
+        if s.name == name:
+            return s
+    return None
+
+
+def confirm(prompt):
+    """Ask y/N. EOF (piped stdin) is treated as 'no'."""
+    try:
+        ans = input(prompt).strip().lower()
+    except EOFError:
+        print()
+        return False
+    return ans in ("y", "yes")
+
+
+def picker_fallback(sketches):
+    """Numbered-list prompt when curses is unavailable / not a TTY."""
+    print(bold("Sketches:"))
+    width = len(str(len(sketches)))
+    for i, s in enumerate(sketches, 1):
+        print("  %s  %s  %s" % (
+            str(i).rjust(width), s.name, dim(s.description or "")))
+    try:
+        raw = input("Pick a number (or q to quit): ").strip()
+    except EOFError:
+        print()
+        return None
+    if raw.lower() in ("q", "quit", ""):
+        return None
+    if not raw.isdigit() or not (1 <= int(raw) <= len(sketches)):
+        err("invalid selection: %s" % raw)
+        return None
+    return sketches[int(raw) - 1]
+
+
+def picker_curses(sketches):
+    import curses
+
+    def run(stdscr):
+        curses.curs_set(0)
+        try:
+            curses.use_default_colors()
+            curses.init_pair(1, curses.COLOR_GREEN, -1)
+            curses.init_pair(2, curses.COLOR_CYAN, -1)
+        except Exception:
+            pass
+        idx = 0
+        top = 0
+        filt = ""
+        filtering = False
+
+        while True:
+            view = [s for s in sketches
+                    if filt.lower() in s.name.lower()
+                    or filt.lower() in (s.description or "").lower()]
+            if idx >= len(view):
+                idx = max(0, len(view) - 1)
+            h, w = stdscr.getmaxyx()
+            stdscr.erase()
+            title = " UNO Q flash — pick a sketch to flash to the STM32U585 "
+            try:
+                stdscr.addnstr(0, 0, title.ljust(w), w, curses.A_REVERSE)
+            except curses.error:
+                pass
+            list_h = h - 3
+            if idx < top:
+                top = idx
+            elif idx >= top + list_h:
+                top = idx - list_h + 1
+            namew = max((len(s.name) for s in view), default=4)
+            namew = min(namew, max(8, w // 3))
+            for row in range(list_h):
+                i = top + row
+                if i >= len(view):
+                    break
+                s = view[i]
+                sel = i == idx
+                name = s.name.ljust(namew)[:namew]
+                desc = s.description or ""
+                line = "  %s  %s" % (name, desc)
+                line = line[:w - 1]
+                attr = curses.A_REVERSE if sel else curses.A_DIM
+                try:
+                    stdscr.addnstr(1 + row, 0, line.ljust(w - 1),
+                                   w - 1, attr if sel else 0)
+                    if not sel:
+                        # dim only the description portion
+                        stdscr.addnstr(1 + row, 0, "  " + name, w - 1)
+                except curses.error:
+                    pass
+            if filtering:
+                foot = " filter: %s_  (enter=apply, esc=clear)" % filt
+            else:
+                foot = (" ↑/↓ or j/k move · enter=flash · / filter"
+                        " · q=quit  [%d/%d] " % (len(view), len(sketches)))
+            try:
+                stdscr.addnstr(h - 1, 0, foot.ljust(w), w, curses.A_REVERSE)
+            except curses.error:
+                pass
+            stdscr.refresh()
+
+            ch = stdscr.getch()
+            if filtering:
+                if ch in (curses.KEY_ENTER, 10, 13):
+                    filtering = False
+                elif ch == 27:  # esc
+                    filtering = False
+                    filt = ""
+                elif ch in (curses.KEY_BACKSPACE, 127, 8):
+                    filt = filt[:-1]
+                elif 32 <= ch < 127:
+                    filt += chr(ch)
+                continue
+            if ch in (ord("q"), 27):
+                return None
+            elif ch in (curses.KEY_DOWN, ord("j")):
+                if view:
+                    idx = min(idx + 1, len(view) - 1)
+            elif ch in (curses.KEY_UP, ord("k")):
+                idx = max(idx - 1, 0)
+            elif ch == curses.KEY_NPAGE:
+                idx = min(idx + list_h, max(0, len(view) - 1))
+            elif ch == curses.KEY_PPAGE:
+                idx = max(idx - list_h, 0)
+            elif ch in (curses.KEY_HOME,):
+                idx = 0
+            elif ch in (curses.KEY_END,):
+                idx = max(0, len(view) - 1)
+            elif ch == ord("/"):
+                filtering = True
+                filt = ""
+            elif ch in (curses.KEY_ENTER, 10, 13):
+                if view:
+                    return view[idx]
+
+    return curses.wrapper(run)
+
+
+def pick(sketches):
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        return picker_fallback(sketches)
+    try:
+        return picker_curses(sketches)
+    except Exception:
+        # curses failed (bad TERM, etc.) — degrade gracefully.
+        return picker_fallback(sketches)
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+HELP = __doc__.strip()
+
+
+def main(argv):
+    args = argv[1:]
+    do_yes = False
+    do_list = False
+    compile_only = False
+    target = None
+
+    for a in args:
+        if a in ("-h", "--help"):
+            print(HELP)
+            return 0
+        elif a in ("-l", "--list"):
+            do_list = True
+        elif a in ("-y", "--yes"):
+            do_yes = True
+        elif a == "--compile-only":
+            compile_only = True
+        elif a.startswith("-"):
+            err("unknown option: %s" % a)
+            return 2
+        elif target is None:
+            target = a
+        else:
+            err("unexpected extra argument: %s" % a)
+            return 2
+
+    sketches = discover_sketches()
+    if not sketches:
+        err("no sketches found under %s (looking for <name>/<name>.ino)"
+            % REPO_ROOT)
+        return 1
+
+    if do_list:
+        print_list(sketches)
+        return 0
+
+    # Resolve which sketch.
+    if target is not None:
+        sketch = find_sketch(target, sketches)
+        if sketch is None:
+            near = suggest(target, sketches)
+            msg = "unknown sketch: %s" % target
+            if near:
+                msg += "\n  did you mean: %s ?" % near[0]
+            err(msg)
+            return 1
+    else:
+        sketch = pick(sketches)
+        if sketch is None:
+            print("Nothing selected.")
+            return 0
+
+    plat, remoteocd = preflight(need_flash=not compile_only)
+
+    if not do_yes and not compile_only:
+        if not confirm("Flash %s to the STM32U585? [y/N] "
+                       % bold(sketch.name)):
+            print("Aborted.")
+            return 0
+
+    compile_sketch(sketch)
+    if compile_only:
+        print(dim("--compile-only: skipping flash."))
+        print("Binary: %s" % sketch.bin_path)
+        return 0
+
+    flash_sketch(sketch, plat, remoteocd)
+    report_success(sketch)
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv))
+    except KeyboardInterrupt:
+        sys.stderr.write("\nInterrupted.\n")
+        sys.exit(130)

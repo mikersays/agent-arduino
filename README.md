@@ -30,9 +30,21 @@ Each skill has a `SKILL.md`, supporting `references/`, and compile-ready `exampl
 `docs/index.html` as well as the tables below).
 
 Standalone MCU sketches, one folder each, all compile-verified on this board
-(`arduino-cli compile -b arduino:zephyr:unoq ./<folder>`). Upload any of them with
-`arduino-cli upload -b arduino:zephyr:unoq -p <board-ip> ./<folder>` — only one sketch runs
-on the MCU at a time.
+(`arduino-cli compile -b arduino:zephyr:unoq ./<folder>`). Only one sketch runs on the MCU
+at a time.
+
+**Flash from the board with the bundled CLI** — pick from an interactive list (arrow keys,
+type-to-filter) or name a sketch directly:
+
+```bash
+./flash                    # interactive picker
+./flash matrix-snake -y    # direct, no confirmation
+./flash --list             # table of all sketches + descriptions
+```
+
+The CLI auto-discovers every `<name>/<name>.ino` and takes its description from the sketch's
+first header-comment line — new sketches appear automatically. (From another machine, use
+`arduino-cli upload -b arduino:zephyr:unoq -p <board-ip> ./<folder>` instead.)
 
 ### On the built-in 8×13 LED matrix
 
