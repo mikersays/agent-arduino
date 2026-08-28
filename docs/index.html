@@ -163,6 +163,13 @@ pre {
   line-height: 1.6;
 }
 pre code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--text); }
+@media (max-width: 640px) {
+  pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+}
 .dim { color: var(--text-dim); }
 footer {
   margin-top: 44px; padding: 26px 0 40px;
