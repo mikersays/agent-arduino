@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Extra UNO Q teaching examples</title><link rel="stylesheet" href="assets/guide.css"></head><body>
+<a class="skip" href="#main">Skip to instructions</a><nav aria-label="Main navigation"><a href="index.html">Catalog</a><a href="getting-started.html">Getting started</a><a href="sketches.html">30 main sketches</a></nav>
+<main id="main"><h1>Try the three extra teaching examples</h1>
+<p>The repository also includes two small standalone sketches and one Python-plus-sketch app inside its optional agent skills. You can use all three without an AI subscription. Complete <a href="getting-started.html">the normal board and tool setup</a> first.</p>
+<h2 id="find">Find the example files</h2><p>The <code>.claude</code> folder may be hidden by your file manager. On macOS, press Command+Shift+Period; on Linux, press Ctrl+H; on Windows, enable View → Show → Hidden items if needed. Open the extracted repository folder and follow the paths below. You do not need Claude installed.</p>
+<h2 id="blink">Blink: your first small program</h2>
+<p>Open <code>.claude/skills/unoq-sketch/examples/blink/blink.ino</code> in Arduino IDE, select Arduino UNO Q and its port, then Verify → Upload. It needs Arduino_RouterBridge for serial support and no external components.</p>
+<p>The built-in LED turns on for half a second, then off for half a second. The serial monitor at 115200 baud prints <code>on</code> and <code>off</code>. Change both <code>delay(500)</code> values to <code>delay(1000)</code>, save, and upload again for a slower blink. On this board, LOW turns the built-in LED on.</p>
+<h2 id="matrix-heart">Matrix heart: brightness in a small array</h2>
+<p>Open <code>.claude/skills/unoq-sketch/examples/matrix-heart/matrix-heart.ino</code> in the IDE, select Arduino UNO Q and its port, then Verify → Upload. It needs the UNO Q core's matrix library and no external components.</p>
+<p>A blue heart fades brighter and dimmer. The <code>heart[8][13]</code> array describes its shape: 1 lights a pixel and 0 leaves it dark. Try changing one 0 to 1, keeping all eight rows and 13 entries per row. Save, Verify, and Upload to see the change. There are no serial command controls.</p>
+<h3>Use the board terminal for either small sketch</h3>
+<p>The helper discovers root folders, so the nested examples do not appear in its picker. To use it, copy the chosen example to a new root folder with the same name. From the repository root on the UNO Q, run the following only if a root <code>blink</code> folder does not already exist:</p>
+<pre><code>cp -r .claude/skills/unoq-sketch/examples/blink ./blink
+python3 flash blink</code></pre>
+<p>For the heart, substitute <code>matrix-heart</code> for both occurrences of <code>blink</code> in the copy command and for the helper's sketch name. Uploading replaces the current program. For a network CLI upload without copying, pass the full example folder path to both compile and upload commands in <a href="getting-started.html#remote-cli">the CLI walkthrough</a>.</p>
+<h2 id="led-toggle">LED Toggle: let Python control a sketch</h2>
+<p>This advanced example contains <code>app.yaml</code>, <code>python/main.py</code>, and <code>sketch/sketch.ino</code> under <code>.claude/skills/unoq-app-bridge/examples/led-toggle/</code>. The Python program runs on Linux and calls a function in the microcontroller sketch once per second. No external components, AI model, or API key are needed.</p>
+<p><strong>Runtime status:</strong> the repository has not yet verified the complete app on hardware. These commands follow the documented on-board App CLI workflow. Starting the app compiles and replaces the running MCU sketch.</p>
+<ol><li>Stop other running App Lab apps. Open the UNO Q Linux terminal and enter the repository root.</li><li>Check that <code>arduino-app-cli version</code> works. If it is missing, complete App Lab setup and updates first.</li><li>Start the complete app using its path:</li></ol>
+<pre><code>arduino-app-cli app start ./.claude/skills/unoq-app-bridge/examples/led-toggle
+arduino-app-cli app logs ./.claude/skills/unoq-app-bridge/examples/led-toggle --follow</code></pre>
+<p>Wait for the build and app startup. Expect the built-in LED to alternate on and off once per second. The Python environment runs in a container managed by App Lab; running <code>python3 python/main.py</code> directly in the board's ordinary shell will not supply <code>arduino.app_utils</code>. Uploading only <code>sketch.ino</code> also will not produce the toggle because Python sends the requests.</p>
+<ol start="4"><li>Press Ctrl+C to leave the log viewer, then stop the app before returning to a standalone sketch:</li></ol>
+<pre><code>arduino-app-cli app stop ./.claude/skills/unoq-app-bridge/examples/led-toggle
+python3 flash matrix-light-show</code></pre>
+<p>To experiment, change <code>time.sleep(1)</code> to <code>time.sleep(2)</code> in the app's Python file. Stop and start the app to apply your edit. If the app fails, keep the build error or app log and check <code>arduino-app-cli app start --help</code> for your installed version. The old comment in <code>main.py</code> passes a display name; use the app path shown here instead.</p>
+<p><a href="getting-started.html#troubleshooting">Troubleshooting</a> · <a href="https://docs.arduino.cc/software/app-lab/tutorials/cli/">Official App CLI guide</a></p>
+</main><footer><a href="sketches.html">Return to the main sketches</a></footer></body></html>

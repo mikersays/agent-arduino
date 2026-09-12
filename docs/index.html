@@ -4,11 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Arduino UNO Q Sketch Suite</title>
-<meta name="description" content="30 compile-verified sketches for the Arduino UNO Q — matrix effects, simulations, games, and serial-controlled tools, all built and reviewed on-device.">
+<meta name="description" content="30 Arduino UNO Q sketches with free IDE setup, upload instructions, and beginner projects. No AI subscription required.">
 <style>
 /*
   AGENTS: sketch data lives in the SKETCHES array at the bottom of this file.
   To add a sketch: append one object there (and add a row to ../README.md).
+  Add user instructions to tools/sketch-guides.json and run tools/build-user-docs.py.
   Keep this page self-contained — no external fonts, scripts, or images.
 */
 :root {
@@ -35,7 +36,7 @@
     --text-dim: #55648a;
     --led: #1f7ae0;
     --led-glow: rgba(31, 122, 224, .35);
-    --accent: #1f7ae0;
+    --accent: #155da8;
     --chip: #e4ebfa;
     --code-bg: #eef2fb;
     --ok: #0d9f5f;
@@ -51,6 +52,12 @@ body {
 }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+nav { display:flex; flex-wrap:wrap; justify-content:center; gap:1rem; padding:1rem 0; }
+.card { min-width:0; }
+.card h3 { overflow-wrap:anywhere; }
+.skip { position:absolute; top:-100px; }
+.skip:focus { position:static; }
 .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
 
 /* ---------- hero ---------- */
@@ -100,7 +107,7 @@ h1 { font-size: clamp(1.7rem, 4vw, 2.6rem); margin: 22px 0 10px; letter-spacing:
   transition: all .15s ease;
 }
 .pill:hover { color: var(--text); border-color: var(--accent); }
-.pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pill.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 .pill .n { opacity: .7; font-size: .8em; margin-left: 4px; }
 #search {
   border: 1px solid var(--card-edge);
@@ -117,7 +124,7 @@ h1 { font-size: clamp(1.7rem, 4vw, 2.6rem); margin: 22px 0 10px; letter-spacing:
 /* ---------- cards ---------- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 16px;
   padding: 26px 0 10px;
 }
@@ -164,6 +171,9 @@ pre {
 }
 pre code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--text); }
 @media (max-width: 640px) {
+  .cmds { white-space:normal; overflow-wrap:anywhere; }
+  .matrix { grid-template-columns:repeat(13, 10px); gap:5px; padding:14px; }
+  .matrix i { width:10px; height:10px; }
   pre {
     white-space: pre-wrap;
     word-break: break-word;
@@ -179,19 +189,25 @@ footer {
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="wrap" aria-label="Main navigation"><a href="getting-started.html">Getting started</a><a href="sketches.html">All sketch instructions</a><a href="https://github.com/mikersays/agent-arduino">Download on GitHub</a></nav>
 
 <header>
   <div class="wrap">
     <div class="matrix" id="matrix" aria-hidden="true"></div>
+    <button class="pill" id="motion" type="button" hidden>Pause animation</button>
     <h1>Arduino UNO Q Sketch Suite</h1>
-    <p class="sub"><b id="count">30</b> compile-verified sketches for the UNO Q's STM32U585 microcontroller —
-    effects and games for the built-in <b>8×13 blue LED matrix</b>, plus serial-controlled tools you can
-    actually use. Every sketch was built, compiled, and adversarially reviewed <b>on the board itself</b>.</p>
+    <p class="sub"><b id="count">30</b> sketches you can run with free Arduino tools.
+    No AI subscription, API key, or coding experience needed to start.
+    Explore effects and games for the <b>8×13 blue LED matrix</b>, then try text commands and sensors.</p>
+    <p><a href="getting-started.html"><b>Start here: upload your first light show →</b></a></p>
   </div>
 </header>
 
-<main class="wrap">
-  <div class="controls" id="filters" role="toolbar" aria-label="Filter sketches">
+<main class="wrap" id="main">
+  <p>Choose a project below, or browse <a href="sketches.html">all 30 upload and usage guides</a>. Every sketch folder includes a README.</p>
+  <noscript><p>JavaScript is off. The <a href="sketches.html">complete sketch list and instructions</a> work without it.</p></noscript>
+  <div class="controls" id="filters" role="group" aria-label="Filter sketches">
     <input id="search" type="search" placeholder="Search sketches…" aria-label="Search sketches">
   </div>
 
@@ -199,23 +215,23 @@ footer {
   <p id="empty">No sketches match — try another search.</p>
 
   <section class="info">
-    <h2>Run any of them</h2>
-    <pre><code><span class="dim"># On the board (or any machine with arduino-cli + the arduino:zephyr core)</span>
-arduino-cli compile -b arduino:zephyr:unoq ./matrix-snake
-arduino-cli upload  -b arduino:zephyr:unoq -p &lt;board-ip&gt; ./matrix-snake
-
-<span class="dim"># Serial-controlled applications: connect the monitor and type HELP</span>
-arduino-cli monitor -p &lt;board-ip&gt; -b arduino:zephyr:unoq -c baudrate=115200</code></pre>
-    <p class="dim">Only one sketch runs on the MCU at a time — uploading replaces the current one.
-    Running an agent on the board? The repo's <a href="https://github.com/mikersays/agent-arduino/tree/main/.claude/skills">project skills</a>
-    document a passwordless local flash path.</p>
+    <h2>Run your first sketch</h2>
+    <p>On Windows, macOS, or Linux, follow <a href="getting-started.html#ide">the free Arduino IDE walkthrough</a>:
+    download the ZIP, install the UNO Q core and libraries, open the sketch, then Verify → Upload.</p>
+    <p>Already in the UNO Q's Linux terminal? From your repository folder:</p>
+    <pre><code>python3 flash matrix-light-show</code></pre>
+    <p>Confirm the replacement prompt with <code>y</code>. This helper runs on the board itself.
+    See <a href="getting-started.html#terminal">terminal setup</a> for prerequisites.</p>
+    <p class="dim">Uploading replaces the current sketch. The repository records compilation on the original board with core 0.56.0;
+    most visual behavior and typed serial input still need hardware verification.
+    Read <a href="getting-started.html#serial">serial setup and its verification limits</a> before trying interactive tools.</p>
   </section>
 </main>
 
 <footer>
   <div class="wrap">
     <a href="https://github.com/mikersays/agent-arduino">github.com/mikersays/agent-arduino</a>
-    · built &amp; verified on-device by Claude, running on the UNO Q's Linux side
+    · originally developed with Claude on UNO Q · usable with free tools by everyone
   </div>
 </footer>
 
@@ -254,11 +270,11 @@ const SKETCHES = [
   {id:"analog-csv-logger",  cat:"apps",    mx:true,  d:"Streams clean CSV from A0–A5 for capture or the Serial Plotter; live bar meters with peak-hold.", c:"START/STOP · RATE <hz> · CH <mask> · VOLTS"},
   {id:"dice-roller",        cat:"apps",    mx:true,  d:"Tabletop dice with rolling animations and pip faces — A0-noise entropy, bias-free rejection sampling.", c:"ROLL 2d6 · COIN · PICK <n> · AUTO ON"},
   {id:"serial-stopwatch",   cat:"apps",    mx:true,  d:"Millisecond stopwatch and lap timer with a 20-lap table; seconds bar and binary minutes on the matrix.", c:"START · STOP · LAP · LAPS · RESET"},
-  {id:"square-wave-generator",cat:"apps",  mx:true,  d:"Two software square-wave channels on any D-pin (0.1–1000 Hz) with log sweep — a pocket signal generator.", c:"OUT 1 D9 100 50 · SWEEP · OFF · STATUS"},
+  {id:"square-wave-generator",cat:"apps",  mx:true,  d:"Two software square-wave channels on D2–D13 (0.1–1000 Hz) with log sweep — a pocket signal generator.", c:"OUT 1 D9 100 50 · SWEEP · OFF · STATUS"},
 
   {id:"matrix-analog-scope",cat:"periph",  mx:true,  d:"Scrolling oscilloscope of A0 with rolling auto-scale; plots floating-pin noise with nothing wired."},
   {id:"rtc-matrix-clock",   cat:"periph",  mx:true,  d:"Binary-coded clock from the bundled RTC library, seeded from compile time, with a seconds heartbeat."},
-  {id:"i2c-scanner",        cat:"periph",  mx:false, d:"Scans the I²C/QWIIC bus every 5 s and prints a table of found addresses with known-device annotations."},
+  {id:"i2c-scanner",        cat:"periph",  mx:false, d:"Scans the SDA/SCL header I²C bus (Wire) every 5 s and prints a table of found addresses with known-device annotations."},
   {id:"rgb-status-cycle",   cat:"periph",  mx:false, d:"Cycles the two MCU-driven RGB LEDs through complementary colors with an LED_BUILTIN heartbeat."},
 
   {id:"zephyr-threads-demo",cat:"rtos",    mx:true,  d:"The board's signature trick: two k_thread_create threads animate matrix halves under a Zephyr mutex."},
@@ -276,6 +292,10 @@ const CATS = {
 const REPO = "https://github.com/mikersays/agent-arduino/tree/main/";
 
 /* ---------- render ---------- */
+function escapeHTML(value) {
+  return value.replace(/[&<>"']/g, c => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[c]));
+}
+
 const grid = document.getElementById("grid");
 const filters = document.getElementById("filters");
 const search = document.getElementById("search");
@@ -289,9 +309,11 @@ for (const [key, label] of Object.entries(CATS)) {
   const b = document.createElement("button");
   b.className = "pill" + (key === "all" ? " active" : "");
   b.innerHTML = `${label}<span class="n">${n}</span>`;
+  b.setAttribute("aria-pressed", String(key === "all"));
   b.onclick = () => {
     activeCat = key;
-    filters.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+    filters.querySelectorAll(".pill").forEach(p => { p.classList.remove("active"); p.setAttribute("aria-pressed", "false"); });
+    b.setAttribute("aria-pressed", "true");
     b.classList.add("active");
     render();
   };
@@ -311,10 +333,14 @@ function render() {
     card.innerHTML =
       `<h3><a href="${REPO}${s.id}">${s.id}</a></h3>` +
       `<p>${s.d}</p>` +
-      (s.c ? `<div class="cmds">${s.c}</div>` : "") +
+      (s.c ? `<div class="cmds">${escapeHTML(s.c)}</div>` : "") +
       `<div class="chips"><span class="chip cat">${CATS[s.cat]}</span>` +
       (s.mx ? `<span class="chip mx">8×13 matrix</span>` : "") +
       (s.c ? `<span class="chip">serial commands</span>` : "") + `</div>`;
+    const guide = document.createElement("a");
+    guide.href = `sketches.html#${s.id}`;
+    guide.textContent = "Upload & usage instructions →";
+    card.appendChild(guide);
     grid.appendChild(card);
   }
   empty.style.display = shown ? "none" : "block";
@@ -331,6 +357,17 @@ for (let i = 0; i < W * H; i++) {
   dots.push(d);
 }
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let animating = !reduced;
+let animationFrame;
+const motion = document.getElementById("motion");
+motion.hidden = false;
+motion.textContent = animating ? "Pause animation" : "Play animation";
+motion.onclick = () => {
+  animating = !animating;
+  motion.textContent = animating ? "Pause animation" : "Play animation";
+  if (animating) animationFrame = requestAnimationFrame(frame);
+  else cancelAnimationFrame(animationFrame);
+};
 function frame(tms) {
   const t = tms * 0.0012;
   for (let y = 0; y < H; y++) {
@@ -344,7 +381,7 @@ function frame(tms) {
       d.classList.toggle("on", b > 0.62);
     }
   }
-  if (!reduced) requestAnimationFrame(frame);
+  if (animating) animationFrame = requestAnimationFrame(frame);
 }
 frame(reduced ? 4200 : 0);
 </script>

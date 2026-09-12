@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Program your UNO Q without AI — Getting started</title>
+<meta name="description" content="Free Arduino IDE and terminal instructions for all 30 UNO Q sketches. Start with no coding experience, then edit your own programs.">
+<link rel="stylesheet" href="assets/guide.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to instructions</a>
+<nav aria-label="Main navigation"><a href="index.html">Sketch catalog</a><a href="getting-started.html" aria-current="page">Getting started</a><a href="sketches.html">All sketch instructions</a><a href="https://github.com/mikersays/agent-arduino">GitHub repository</a></nav>
+<main id="main">
+<h1>Your UNO Q. Your programs. No AI subscription.</h1>
+<p>You can run and edit every standalone sketch in this repository with free Arduino tools. You do not need an AI account, API key, paid coding assistant, or GitHub account to download the code. Start with a light show, then change a message or explore sensors at your own pace.</p>
+<p>A <strong>sketch</strong> is an Arduino program saved in an <code>.ino</code> file. <strong>Compile</strong> means checking and translating that code for your board. <strong>Upload</strong> (also called flash) means installing it on the board.</p>
+<div class="callout"><strong>Start here:</strong> Follow <a href="#ide">the Arduino IDE steps</a> if you use Windows, macOS, or Linux on a separate computer. If you already have the UNO Q's Linux terminal open, follow <a href="#terminal">the on-board terminal steps</a>. Both paths run the same sketches.</div>
+<h2 id="prepare">1. Get your board ready</h2>
+<p>Gather these items before you begin:</p>
+<ul><li>An <strong>Arduino UNO Q</strong>. These sketches target its STM32U585 microcontroller, not an UNO R3 or UNO R4.</li><li>A USB-C <strong>data</strong> cable and a computer for the IDE path.</li><li>Internet access for the first downloads and board setup. The animations themselves do not need the internet.</li></ul>
+<ol><li>Complete Arduino's <a href="https://docs.arduino.cc/tutorials/uno-q/user-manual/">official UNO Q first setup</a> with Arduino App Lab. Set up the board's Linux password and network, and apply the setup updates. App Lab is the board setup tool; it does not require an AI subscription.</li><li>Let the board finish booting. Its Linux side manages communication and uploads to the microcontroller.</li><li>Stop any running App Lab app before uploading a standalone sketch. An app can install its own sketch when it starts. If the old app returns after reboot, check its <strong>Run at startup</strong> setting in App Lab.</li><li>For the first light show, leave external sensors, shields, and wires disconnected.</li></ol>
+<p><strong>Uploading replaces the current microcontroller program.</strong> Save any source code you want to keep first. Uploading a sketch does not reinstall the board's Debian operating system. To return to an earlier sketch, upload its saved source again. Serial settings and messages in these examples are held in memory and are lost when the sketch restarts.</p>
+<h2 id="ide">2A. Upload with the free Arduino IDE</h2>
+<p>This path runs on your computer. You do not need Git, Python, or a terminal.</p>
+<ol>
+<li>Install <a href="https://www.arduino.cc/en/software/">Arduino IDE 2</a> for your operating system.</li>
+<li>Download the repository: open <a href="https://github.com/mikersays/agent-arduino">agent-arduino on GitHub</a>, select <strong>Code → Download ZIP</strong>, then extract the ZIP. On Windows, choose <strong>Extract All</strong>; on macOS, double-click the ZIP; on Linux, use your archive manager. Work in the extracted <code>agent-arduino-main</code> folder, not inside the ZIP.</li>
+<li>In the IDE, open <strong>Boards Manager</strong>, search for <strong>UNO Q</strong>, and install the Arduino UNO Q Zephyr core. These sketches were originally compiled with <code>arduino:zephyr</code> version <strong>0.56.0</strong>. Start with the current core; <code>Serial</code> support requires version 0.55.0 or later. If the package is missing, add <code>https://downloads.arduino.cc/packages/package_zephyr_index.json</code> in Preferences under <strong>Additional Boards Manager URLs</strong>, then search again.</li>
+<li>Open <strong>Library Manager</strong>. Install <code>Arduino_RouterBridge</code> and <code>ArduinoGraphics</code>, including dependencies when prompted. The UNO Q core supplies <code>Arduino_LED_Matrix</code>, <code>Wire</code>, <code>RTC</code>, and Zephyr headers. Do not substitute an UNO R4 matrix library.</li>
+<li>Connect the UNO Q with the USB-C data cable. Select <strong>Arduino UNO Q</strong> in the board selector, then select its detected port under <strong>Tools → Port</strong>. Current IDE versions support the USB connection through the board's Linux side. A network connection may instead ask for the board's Linux password.</li>
+<li>Choose <strong>File → Open</strong> and open <code>matrix-light-show/matrix-light-show.ino</code> from your extracted folder. The folder and file must keep the same name.</li>
+<li>Click <strong>Verify</strong> (the checkmark). Wait for compilation to finish. A first build can take longer while tools prepare their caches. If it fails, follow <a href="#troubleshooting">the troubleshooting steps</a>.</li>
+<li>Click <strong>Upload</strong> (the right arrow). Wait for the IDE to report that upload finished. You should see changing blue patterns on the built-in 13-column, 8-row matrix. You do not need to type any commands for this sketch.</li>
+</ol>
+<p><strong>First success:</strong> the matrix cycles through several effects. Next, open any other <code>name/name.ino</code> from <a href="sketches.html">the sketch instructions</a> and repeat Verify → Upload. The games play themselves; they do not need a controller or an online AI service.</p>
+<h2 id="terminal">2B. Upload from the UNO Q's Linux terminal</h2>
+<p>The bundled <code>flash</code> helper runs <strong>on the UNO Q itself</strong>. It uses Python 3's standard library and the local Arduino tools. Do not run its upload path on your Windows, macOS, or ordinary Linux computer.</p>
+<ol><li>Open Terminal on the board's desktop, or connect from your computer with SSH after first setup. In Windows PowerShell, macOS Terminal, or a Linux terminal, type the following with your actual board name:</li></ol>
+<pre><code>ssh arduino@YOUR-BOARD-NAME.local</code></pre>
+<p>Replace <code>YOUR-BOARD-NAME</code> with the name you chose in App Lab. You can use the board's current IP address instead. Check that the SSH host is your board before accepting its first connection. Enter the board's Linux password; no characters appear while you type it. After login, the commands below run on the board. See Arduino's <a href="https://docs.arduino.cc/tutorials/uno-q/debian-guide/">Linux terminal guide</a> if you need help connecting.</p>
+<ol start="2"><li>Download the repository in that board terminal. If Git or Python 3 is missing, install them with <code>sudo apt update</code> and <code>sudo apt install git python3</code>.</li></ol>
+<pre><code>git clone https://github.com/mikersays/agent-arduino.git
+cd agent-arduino</code></pre>
+<p>If you already cloned the repository, enter that folder instead. Save your edits before fetching an update with <code>git pull --ff-only</code>.</p>
+<ol start="3"><li>Check the Arduino tools and install the libraries:</li></ol>
+<pre><code>arduino-cli version
+arduino-cli core list
+arduino-cli lib install Arduino_RouterBridge ArduinoGraphics</code></pre>
+<p>If <code>arduino-cli</code> is missing, install it using <a href="https://arduino.github.io/arduino-cli/latest/installation/">Arduino's CLI installation instructions</a> for the board's Linux ARM64 system, then reopen the terminal. If <code>arduino:zephyr</code> is absent from the core list, install it:</p>
+<pre><code>arduino-cli core update-index --additional-urls https://downloads.arduino.cc/packages/package_zephyr_index.json
+arduino-cli core install arduino:zephyr --additional-urls https://downloads.arduino.cc/packages/package_zephyr_index.json</code></pre>
+<p>The helper expects the standard board installation under <code>~/.arduino15</code>. If you customized the Arduino data directory, use the IDE path or restore a standard installation for this helper. Do not run <code>flash</code> with <code>sudo</code>; that changes the user and tool paths.</p>
+<ol start="4"><li>Compile and upload your first light show:</li></ol>
+<pre><code>python3 flash matrix-light-show</code></pre>
+<p>Read the replacement prompt, then type <code>y</code> and press Enter. The helper compiles first and uploads only after compilation succeeds. The changing blue patterns confirm the sketch is running. A compilation success alone does not mean an upload succeeded.</p>
+<ol start="5"><li>Choose your next sketch with these commands:</li></ol>
+<pre><code>python3 flash --list
+python3 flash
+python3 flash matrix-snake
+python3 flash matrix-snake --compile-only</code></pre>
+<p>The interactive picker supports arrow keys, Enter, and filtering; if the terminal cannot display it, the helper falls back to a numbered list. The last command checks the code without replacing the running sketch. On a Git clone, <code>./flash</code> is equivalent to <code>python3 flash</code>. The <code>-y</code> option skips the upload confirmation; beginners can leave it off.</p>
+<details id="remote-cli"><summary>Experienced users: compile and upload from another computer</summary>
+<p>Install Arduino CLI, the UNO Q core, and the two libraries on that computer as above. Run from the extracted repository folder. This network path requires the computer and board to be reachable on the same network:</p>
+<pre><code>arduino-cli board list
+arduino-cli compile -b arduino:zephyr:unoq ./matrix-light-show
+arduino-cli upload -b arduino:zephyr:unoq -p BOARD_IP ./matrix-light-show</code></pre>
+<p>Replace <code>BOARD_IP</code> with the current address from discovery or App Lab. On the board, <code>ip -brief addr show wlan0</code> also shows the Wi-Fi address; omit its <code>/24</code> or other network suffix. Type the Linux password when prompted. Keep this an interactive terminal session; do not put the password in a command or a script. The bundled helper's compiled files are in a separate cache, so run the compile command shown here before this upload command.</p>
+</details>
+<h2 id="serial">3. Control a sketch with text commands</h2>
+<p>A <strong>serial monitor</strong> displays messages from the sketch and sends your typed commands back. These examples call <code>Serial.begin(115200)</code>. On the UNO Q, that connection travels through the Linux bridge.</p>
+<div class="callout"><strong>Verification status:</strong> the repository records successful compilation of all 30 sketches on the original board. It does not yet record a successful end-to-end test of typed serial commands. The following commands match the code, but input through your IDE/core/bridge combination still needs a hardware check. Most animations work without input; the display server, stopwatch, and dice controls need that check for interactive use.</div>
+<ol><li>Upload <code>matrix-display-server</code>. A dim pixel in the bottom-right corner is its expected idle display.</li><li>Open <strong>Tools → Serial Monitor</strong> in Arduino IDE. Select <strong>115200 baud</strong> and <strong>Newline</strong> (or Both NL &amp; CR) for the line ending. Keep the UNO Q selected.</li><li>Type <code>HELP</code> and send it. Then type <code>BAR 75</code> and send it as a separate line. Do not include backticks or a shell prompt.</li><li>Look for an <code>OK</code> reply and a progress bar on the matrix. This checks both command delivery and the visible response. Follow your chosen sketch's command examples next.</li></ol>
+<p>For the documented network monitor path, run this in an interactive terminal and replace <code>BOARD_IP</code> with your board's address:</p>
+<pre><code>arduino-cli monitor -p BOARD_IP -b arduino:zephyr:unoq -c baudrate=115200</code></pre>
+<p>Type one command per line and press Enter. Close the monitor with Ctrl+C before uploading again. If input does not reach the sketch, see <a href="#serial-trouble">serial troubleshooting</a>. Some sketches print only at startup; missing an initial banner does not prove the sketch failed. The marquee processes commands between completed scrolls, so short messages respond sooner.</p>
+<h2 id="edit">4. Make your first code change</h2>
+<p>Start with a change that has an obvious result:</p>
+<ol><li>Open <code>matrix-text-scroller/matrix-text-scroller.ino</code> in the IDE.</li><li>Find <code>FIXED_MESSAGES</code> and replace the text inside one pair of quotation marks with <code>HELLO SAM</code>. Keep the quotation marks, commas, and braces.</li><li>Save the file, then click Verify and Upload. Wait through the message rotation to see your own words.</li><li>Try changing <code>SCROLL_SPEED_MS</code> from <code>60</code> to <code>100</code>. A larger interval makes scrolling slower.</li></ol>
+<p>In a board terminal, edit the same file with <code>nano matrix-text-scroller/matrix-text-scroller.ino</code>. Save with Ctrl+O, Enter; exit with Ctrl+X. Run <code>python3 flash matrix-text-scroller</code> to compile and upload your edit.</p>
+<p>Change one value at a time and keep a copy of the original. To make a separate project, copy a sketch folder and rename both the folder and its <code>.ino</code> file to the same new name. The helper discovers matching folders automatically. Matrix drawing buffers have 104 pixels; grayscale values for <code>matrix.draw()</code> in these sketches range from 0 to 7. Text graphics use a different brightness API, so follow the existing text example.</p>
+<h2 id="wiring">5. Add a sensor when you are ready</h2>
+<p>All 30 sketches can start without external components. The scope and logger read floating-pin noise without sensors; the scanner can report an empty bus. The square-wave generator drives D13 immediately, so disconnect existing circuits before uploading it.</p>
+<p>Power down and disconnect board power before changing wiring. For these beginner examples, keep analog input signals between <strong>0 and 3.3 V</strong>, share GND with the signal source, and never connect a signal generator directly to another output. Follow the board's <a href="https://docs.arduino.cc/hardware/uno-q/">official pinout and electrical specifications</a> for a particular peripheral.</p>
+<p>For an optional analog test, connect a 10 kΩ potentiometer's outside terminals to 3.3V and GND, and its middle terminal to A0. After you check the wiring and restore power, turn it while running <code>matrix-analog-scope</code> or <code>analog-csv-logger</code>.</p>
+<p>The supplied <code>i2c-scanner</code> uses <code>Wire</code> on the SDA/SCL header bus. The Qwiic connector uses <code>Wire1</code> in the current Arduino documentation. A Qwiic device will not be scanned by this sketch as written; see <a href="sketches.html#i2c-scanner">its instructions</a>.</p>
+<h2 id="troubleshooting">Get unstuck</h2>
+<dl>
+<dt><strong>The board or port is missing</strong></dt><dd>Wait for Linux to boot, try another data cable, and check the board in App Lab. Complete first setup. For network uploads, check the current IP and that both devices are on the same network. Follow the OS-specific discovery and Linux USB permissions instructions in the <a href="https://docs.arduino.cc/tutorials/uno-q/user-manual/">UNO Q manual</a>.</dd>
+<dt><strong>The compiler cannot find a header</strong></dt><dd>Install Arduino_RouterBridge and ArduinoGraphics in Library Manager. For Arduino_LED_Matrix.h, RTC.h, or zephyr/kernel.h, check that Arduino UNO Q is selected and its Zephyr core is installed. ArduinoGraphics must appear before Arduino_LED_Matrix in the text sketches; keep their include order.</dd>
+<dt><strong>The compiler reports an unsupported API or linking error</strong></dt><dd>Record your core and library versions and the first error. The suite was originally compiled with core 0.56.0, and newer releases may differ. If a current core fails, you can select 0.56.0 in Boards Manager to compare. Close other builds and try Verify again; do not run concurrent builds in the same cache.</dd>
+<dt><strong>The upload asks for a password or says input is not supported</strong></dt><dd>Use the board's Linux password in an interactive terminal, or SSH into the board and run <code>python3 flash SKETCH_NAME</code> there. Replace SKETCH_NAME with the folder name. The local helper avoids a second network password prompt.</dd>
+<dt><strong>The helper cannot find the core or remoteocd</strong></dt><dd>Check <code>arduino-cli core list</code> as the normal board user. The helper searches <code>~/.arduino15/packages/arduino/</code>; a different user or custom data directory will not match. Install the UNO Q core there, or use the IDE route.</dd>
+<dt><strong>The upload succeeds but the old app returns</strong></dt><dd>Stop the running App Lab app and disable its startup setting before uploading again. Check that you selected the intended board. The MCU runs one sketch at a time.</dd>
+<dt id="serial-trouble"><strong>The monitor is blank or commands do nothing</strong></dt><dd>Confirm the selected sketch, board, 115200 baud, and newline setting. Try HELP, or STATUS for the stopwatch, timer, logger, and metronome. Wait for any text scroll to finish. Close other monitors. Try the documented network monitor path above. For output diagnostics on the board, <code>arduino-app-cli monitor</code> is another option; it is not a verified replacement for command input. Record whether output works separately from input. If replies still never arrive, use a self-running sketch while reporting the bridge issue; reflashing the same code repeatedly will not establish that input works.</dd>
+<dt><strong>The screen seems blank</strong></dt><dd>The display server starts with one dim pixel. The stopwatch starts paused. The scanner uses serial output and the built-in LED, not the matrix. Compare with the expected behavior in the sketch's instructions; try matrix-light-show to check the display.</dd>
+</dl>
+<p>If you need help, open a <a href="https://github.com/mikersays/agent-arduino/issues">GitHub issue</a> with the sketch name, operating system, IDE/CLI version, core/library versions, upload method, first error, and expected versus actual behavior. Remove passwords and private network details. You can also ask the <a href="https://forum.arduino.cc/">Arduino community</a>.</p>
+<p>For smaller programs or a Python/MCU app, follow <a href="examples.html">the three extra teaching examples</a>: Blink, Matrix Heart, and LED Toggle.</p>
+<h2 id="next">Choose your next step</h2>
+<p>Follow <a href="sketches.html">the individual instructions for all 30 sketches</a>. Try effects first, edit scrolling text next, then explore serial commands, sensors, and finally the Zephyr threads example. The optional agent skills in <code>.claude/skills/</code> remain available for people using coding assistants; they are not required for any of these steps.</p>
+<p class="small">Setup references checked September 12, 2026: <a href="https://docs.arduino.cc/tutorials/uno-q/user-manual/">Arduino UNO Q user manual</a>, <a href="https://docs.arduino.cc/tutorials/uno-q/debian-guide/">Debian guide</a>, and the source code in this repository. Documentation and source checks do not replace an upload test on your hardware.</p>
+</main><footer>Free tools · No AI subscription · <a href="index.html">Back to the catalog</a></footer>
+</body></html>
