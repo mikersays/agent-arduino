@@ -61,6 +61,10 @@ COM ports, and the Zephyr/llext toolchain has linking quirks).
    list every sketch (it also documents its own update procedure in a comment at the top).
    The `./flash` CLI needs no registration (it auto-discovers), but run `./flash --list`
    and check your sketch's description line reads well — fix the header comment if not.
+   Also add user guidance to `tools/sketch-guides.json` and run
+   `python3 tools/build-user-docs.py` (generates sketch READMEs and `docs/sketches.html`).
+   Check with `python3 tools/build-user-docs.py --check`. Keep
+   `docs/getting-started.html` accurate when setup or upload requirements change.
    New skills likewise: update the README skills table and mention notable capabilities on
    the Pages site if user-facing.
 5. Verify the full suite still compiles before shipping (loop `arduino-cli compile` over all

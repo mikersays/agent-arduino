@@ -6,12 +6,18 @@ has acceptance criteria. Check items off (`[x]`) and prune completed sections as
 
 ## P1 — correctness & visibility gaps
 
-- [ ] **Enable GitHub Pages** — `https://mikersays.github.io/agent-arduino/` returns **404**;
-  the site was never enabled. No `gh` CLI on the board and git-push can't flip it. Either ask
-  Mike to click Settings → Pages → Deploy from branch → `main` `/docs`, or if `gh` is installed
-  and authenticated by then: `gh api -X POST repos/mikersays/agent-arduino/pages -f
-  'source[branch]=main' -f 'source[path]=/docs'`.
-  *Accept:* the URL serves the catalog with all 30 cards.
+- [x] **Enable GitHub Pages** — confirmed via GitHub API on 2026-09-12:
+  Pages serves `main` `/docs` at https://mikersays.github.io/agent-arduino/.
+
+- [x] **Make standalone sketches accessible without AI** — free IDE and on-board
+  terminal setup in `docs/getting-started.html`; all 30 sketch guides in
+  `docs/sketches.html` and individual READMEs. Regenerate with
+  `python3 tools/build-user-docs.py`; check with `--check`.
+
+- [ ] **Verify I2C bus guidance on hardware.** The scanner uses `Wire`; current
+  Arduino documentation assigns Qwiic to `Wire1`. User guides document the header
+  bus and the untested edit for Qwiic. Correct the original sketch header when
+  the bus behavior has been verified; do not claim it scans both buses.
 
 - [ ] **Runtime-verify the serial-input path.** The 9 application sketches' command handling
   is compile-verified and logic-reviewed, but nobody has confirmed that typed input actually

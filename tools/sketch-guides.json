@@ -1,0 +1,334 @@
+[
+  {
+    "id": "matrix-light-show",
+    "level": "Start here",
+    "expected": "Eight blue animations rotate automatically, with transitions between effects. No commands are needed.",
+    "try_it": "Watch a full cycle and identify the rain, scanner, and comet patterns.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-plasma",
+    "level": "Beginner",
+    "expected": "Smooth blue waves of brightness flow across the whole matrix. No commands are needed.",
+    "try_it": "Watch how several overlapping waves create the pattern.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-starfield",
+    "level": "Beginner",
+    "expected": "Stars move outward from the center; their brightness changes with distance and their speed varies automatically.",
+    "try_it": "Watch the change from slow flight to faster flight.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-lissajous",
+    "level": "Beginner",
+    "expected": "A bright point traces looping curves with fading trails; the curve changes over time.",
+    "try_it": "Compare a simple loop with a later, more complex curve.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-dvd-bounce",
+    "level": "Beginner",
+    "expected": "A small sprite bounces around the display; corner hits trigger a celebration.",
+    "try_it": "Watch until the sprite reaches a corner.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-text-scroller",
+    "level": "Beginner",
+    "expected": "Messages and uptime scroll across the matrix without input.",
+    "try_it": "Edit one string in FIXED_MESSAGES, save, and upload again. Change SCROLL_SPEED_MS from 60 to 100 to slow the text.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-fire",
+    "level": "Beginner",
+    "expected": "Blue simulated flames rise from the bottom, cycling between calmer and stronger fire.",
+    "try_it": "Change kIntensityCycleS from 25.0f to 40.0f, then compile and upload to lengthen the cycle.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-life",
+    "level": "Beginner",
+    "expected": "Cells appear and disappear according to Conway's Game of Life. Dead cells leave trails; the sketch restarts stalled populations.",
+    "try_it": "Change kGenerationIntervalMs from 125 to 250, then compile and upload to observe generations more slowly.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-sand",
+    "level": "Beginner",
+    "expected": "Grains fall from a moving source, pile up, dissolve, and start again.",
+    "try_it": "Watch how a grain slides when another grain blocks its fall.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-wave-pool",
+    "level": "Beginner",
+    "expected": "Drops disturb a simulated pool; ripples spread and reflect from the edges.",
+    "try_it": "Watch two ripples meet and pass through each other.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-rule-automata",
+    "level": "Beginner",
+    "expected": "Rows of cells evolve into a waterfall of patterns as the sketch cycles through rules 30, 90, 110, 184, and 54.",
+    "try_it": "Compare the triangular patterns with the less regular ones.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-maze-solver",
+    "level": "Beginner",
+    "expected": "The sketch builds a maze, searches it, flashes the shortest path, and starts a new maze.",
+    "try_it": "Change kStepIntervalMs from 66 to 150 and upload again to slow down the search.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-snake",
+    "level": "Beginner",
+    "expected": "A snake finds food and avoids itself automatically, restarting after it dies.",
+    "try_it": "Watch how its path changes as it grows. There are no keyboard controls; the decision code runs locally.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-pong",
+    "level": "Beginner",
+    "expected": "Two automatic paddles play Pong. The ball leaves trails and points appear in a dot-column scoreboard.",
+    "try_it": "Watch until a paddle misses. The built-in opponent logic needs no AI service.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-breakout",
+    "level": "Beginner",
+    "expected": "An automatic paddle bounces a ball into three brick rows; missed balls cost lives and cleared levels rebuild the bricks.",
+    "try_it": "Watch a brick disappear after a hit. You do not steer the paddle.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-invaders",
+    "level": "Beginner",
+    "expected": "Invaders march across the matrix while an automatic cannon dodges bombs and fires at them.",
+    "try_it": "Watch how the cannon changes direction before aiming. No controller is needed.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "matrix-marquee",
+    "level": "Serial commands",
+    "expected": "HELLO FROM UNO Q scrolls repeatedly at startup.",
+    "try_it": "Send TEXT HELLO SAM, then SPEED 40. The next completed scroll should use your new message and speed.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [
+      "TEXT <message> — set the repeating message, up to 120 characters",
+      "ONCE <message> — scroll once, then return to the repeating message",
+      "SPEED <ms> — 20–500 milliseconds per step; lower is faster",
+      "CLEAR — clear the repeating message",
+      "HELP — list commands"
+    ],
+    "notes": "Commands take effect only between scroll passes. A long message at a slow speed can take minutes; test with short messages. The repeating message survives between scrolls, not across sketch restarts."
+  },
+  {
+    "id": "matrix-display-server",
+    "level": "Serial commands",
+    "expected": "A single dim pixel appears at the bottom-right until you send a command.",
+    "try_it": "Send BAR 75. Expect an OK reply and a mostly filled horizontal bar. Then send PIX 6 0 7 to light a top-center pixel.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [
+      "TEXT <message> — scroll once, then restore the frame",
+      "BAR <0-100> — horizontal progress bar",
+      "METER <0-100> <0-100> — two vertical meters",
+      "ROW <y> <13 digits 0-7> — replace one row, y = 0–7",
+      "PIX <x> <y> <0-7> — set a pixel, x = 0–12 and y = 0–7",
+      "FILL <0-7> — fill the frame",
+      "BLINK <1-10> — blink the current frame",
+      "CLEAR — turn all pixels off",
+      "HELP — list commands"
+    ],
+    "notes": "TEXT replies after scrolling finishes. Pixel coordinates start at the top-left (0, 0). Wait for each reply before sending the next command."
+  },
+  {
+    "id": "pomodoro-timer",
+    "level": "Serial commands",
+    "expected": "A 25-minute work phase starts immediately. The matrix slowly drains; breaks last 5 minutes, with a 15-minute break after four work phases.",
+    "try_it": "Send WORK 1 and RESET for a short trial, then STATUS. PAUSE freezes the timer and RESUME continues it.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [
+      "START / RESUME — start or resume",
+      "PAUSE — freeze remaining time",
+      "SKIP — advance to the next phase",
+      "RESET — restart the work cycle and clear the tally",
+      "WORK <minutes> / BREAK <minutes> / LONG <minutes> — durations, clamped to 1–120",
+      "STATUS — report phase and remaining time"
+    ],
+    "notes": ""
+  },
+  {
+    "id": "visual-metronome",
+    "level": "Serial commands",
+    "expected": "A dot swings at 100 beats per minute in groups of four, with a brighter first beat. This is a silent visual metronome.",
+    "try_it": "Send BPM 60 and TS 3. Expect one beat per second, grouped in threes. STOP freezes it; START resumes it.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [
+      "BPM <40-240> — beats per minute",
+      "TS <2-7> — beats per bar",
+      "TAP — send repeatedly in time to set tempo",
+      "START / STOP — run or freeze",
+      "STATUS — report settings"
+    ],
+    "notes": ""
+  },
+  {
+    "id": "morse-beacon",
+    "level": "Serial commands",
+    "expected": "The matrix and built-in LED repeatedly blink UNO Q in Morse code at 12 words per minute.",
+    "try_it": "Send WPM 5, REPEAT OFF, then SEND SOS on separate lines. Watch three short, three long, and three short flashes.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [
+      "SEND <text> — send up to 200 characters",
+      "WPM <5-30> — words per minute",
+      "REPEAT ON / REPEAT OFF — enable or disable repetition",
+      "STOP — stop transmission",
+      "HELP — list commands"
+    ],
+    "notes": ""
+  },
+  {
+    "id": "analog-csv-logger",
+    "level": "Sensors / serial",
+    "expected": "A0, A1, and A2 stream raw readings at 2 samples per second; the matrix shows bars. Unconnected pins produce noise.",
+    "try_it": "Send CH A0, RATE 5, and HEADER on separate lines. Expect a timestamp and A0 value in each data row.",
+    "hardware": "No components needed for a noise demo. For real data, connect a 0–3.3 V signal to A0–A5 and share GND; see the optional potentiometer example in the setup guide.",
+    "commands": [
+      "START / STOP — start or pause logging",
+      "RATE <0.2-200> — samples per second",
+      "CH <mask or list> — CH 111000 enables A0–A2; CH A0,A3 selects A0 and A3",
+      "RAW / VOLTS — raw counts or a voltage estimate",
+      "HEADER — print column names",
+      "STATUS — report settings"
+    ],
+    "notes": "VOLTS assumes 10-bit readings (0–1023) and a 3.3 V reference in this code; it is an estimate, not a calibrated measurement. For a recording, run the network monitor from the setup guide with | tee data.csv appended in a Linux/macOS shell. Monitor banners and # comment lines may need removal before importing the numeric rows. Do not assume the CSV format is accepted directly by every Serial Plotter version."
+  },
+  {
+    "id": "dice-roller",
+    "level": "Serial commands",
+    "expected": "A six-pip die face appears. Automatic rolling is OFF at startup; the idle face is normal.",
+    "try_it": "Send ROLL 2d6. Wait for the animation and read the individual rolls and total in the monitor. AUTO ON enables a roll about every eight seconds.",
+    "hardware": "No external components. Leave A0 unconnected for the noise used to seed casual dice rolls.",
+    "commands": [
+      "ROLL d4|d6|d8|d10|d12|d20|d100 — choose one die, for example ROLL d20",
+      "ROLL <N>d<S> — 1–8 dice with a supported side count, for example ROLL 3d6",
+      "COIN — heads or tails",
+      "PICK <2-1000> — choose an integer from 1 to your limit",
+      "AUTO ON / AUTO OFF — enable or disable the idle d6 demo",
+      "HELP — list commands"
+    ],
+    "notes": "Randomness is intended for casual games. This is not a cryptographic random-number generator."
+  },
+  {
+    "id": "serial-stopwatch",
+    "level": "Serial commands",
+    "expected": "The stopwatch starts paused at zero, with a dim indicator. It waits for START.",
+    "try_it": "Send START, wait a few seconds, then LAP, STOP, and LAPS. Read the elapsed time and lap table in the monitor.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [
+      "START / STOP — start, resume, or pause",
+      "RESET — zero time, clear laps, and stop",
+      "LAP — save a lap while running; up to 20",
+      "LAPS — print saved laps",
+      "STATUS — report state and elapsed time",
+      "HELP — list commands"
+    ],
+    "notes": ""
+  },
+  {
+    "id": "square-wave-generator",
+    "level": "Signals / serial",
+    "expected": "Channel 1 drives D13 at 1 Hz and 50% duty immediately; the built-in LED mirrors it. The upper matrix half shows its waveform.",
+    "try_it": "With external circuits disconnected, send OUT 1 D9 2 50, then STATUS. Channel 1 moves to D9 at 2 Hz. Send OFF 1 to drive it LOW.",
+    "hardware": "Disconnect attached circuits before uploading: D13 is driven at startup. No components are needed to see the built-in LED demo. For measurements, use a compatible oscilloscope or logic analyzer with common GND. Never connect an output to another output.",
+    "commands": [
+      "OUT <1|2> <D2-D13> <0.1-1000> <1-99> — channel, pin, frequency in Hz, duty in percent",
+      "OFF <1|2> — stop the channel and drive its pin LOW",
+      "SWEEP <channel> <start Hz> <end Hz> <seconds> — logarithmic sweep; 0.1–1000 Hz and 0.1–3600 seconds; configure OUT first",
+      "STATUS — report both channels",
+      "HELP — list commands"
+    ],
+    "notes": "This uses software timing, not a precision hardware signal source. High frequencies and extreme duty cycles can have substantial jitter. The matrix samples slowly and cannot show a high-frequency waveform accurately."
+  },
+  {
+    "id": "matrix-analog-scope",
+    "level": "Sensors",
+    "expected": "A0 samples enter from the right and scroll left. The scale adjusts automatically; an unconnected A0 shows noise. Raw values also print at about 10 Hz.",
+    "try_it": "Try the optional potentiometer wiring from the getting-started guide and turn it. Auto-scaling means this is a changing-signal display, not a fixed voltage scale.",
+    "hardware": "No components needed for a noise demo. For real data, connect a 0–3.3 V signal to A0 and share GND; see the potentiometer example in the setup guide.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "rtc-matrix-clock",
+    "level": "Intermediate",
+    "expected": "A binary-coded clock displays hours, minutes, and seconds. The monitor prints the full date and time once a second.",
+    "try_it": "Read columns 1/2 for hours, 5/6 for minutes, and 9/10 for seconds (columns start at 0). From row 7 upward, bright bits are worth 1, 2, 4, and 8. Add them for each digit; ignore the dim baseline markers.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": "When the RTC is not running, the sketch seeds it from compile time. An already running RTC is left alone. This is not internet time synchronization and has no serial SET command; rebuilding alone does not necessarily reset the clock."
+  },
+  {
+    "id": "i2c-scanner",
+    "level": "Sensors",
+    "expected": "The serial monitor lists addresses on the SDA/SCL header bus every five seconds. With no devices, an empty scan is expected. The matrix is not used.",
+    "try_it": "Try the empty-bus scan first. Then power down, attach a compatible I2C device on the header bus, and compare the next scan after powering up.",
+    "hardware": "No components needed for an empty scan. Optional: a compatible I2C device on the SDA/SCL header pins with common GND and its required supply. Power down before wiring. Qwiic uses a separate bus; read the limitation below.",
+    "commands": [],
+    "notes": "This sketch calls Wire.begin(), Wire.beginTransmission(), and Wire.endTransmission(). Current Arduino documentation assigns the Qwiic connector to Wire1. For a Qwiic experiment, replace those three Wire calls with Wire1, then Verify and Upload; that variant has not been compiled or hardware-tested here. The original header comment describing Qwiic scanning is too broad. Device-name annotations are guesses based on addresses, not positive identification."
+  },
+  {
+    "id": "rgb-status-cycle",
+    "level": "Beginner",
+    "expected": "The two microcontroller RGB LEDs cycle through complementary colors while the built-in LED provides a heartbeat. The matrix is not used.",
+    "try_it": "Compare the two LED color sequences. The repository still needs a visual check of its assumed RGB LED polarity.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  },
+  {
+    "id": "zephyr-threads-demo",
+    "level": "Advanced",
+    "expected": "The left matrix half shows a bouncing dot and the right half a breathing gradient, separated by a dark column. Serial counters print every five seconds.",
+    "try_it": "Watch both halves update at different rates. Read the source comments about the mutex, which protects the shared display buffer. RGB heartbeat polarity still needs a visual check.",
+    "hardware": "No external components; uses the built-in LEDs or matrix.",
+    "commands": [],
+    "notes": ""
+  }
+]
