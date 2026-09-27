@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arduino Uno Q — Full Setup Guide</title>
+  <meta name="description" content="A complete, step-by-step guide to setting up the Arduino Uno Q: App Lab onboarding, the required reboot, SSH from anywhere via Tailscale, Claude Code, and a public Cloudflare Tunnel.">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --code-bg: #010409;
+
+      --blue: #58a6ff;
+      --purple: #bc8cff;
+      --green: #3fb950;
+      --orange: #f0883e;
+      --red: #f85149;
+
+      --maxw: 880px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      line-height: 1.65;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color .15s ease, color .15s ease;
+    }
+    a:hover { border-bottom-color: currentColor; }
+    a:focus-visible,
+    .copy-btn:focus-visible,
+    .toc a:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+      border-radius: 3px;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.86em;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 0.12em 0.4em;
+      color: #e6edf3;
+      white-space: nowrap;
+    }
+
+    /* ============ HEADER ============ */
+    header.site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: saturate(160%) blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .wordmark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    .chip-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: #0d1117;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .wordmark .muted {
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-left: 2px;
+    }
+    #progress {
+      position: absolute;
+      left: 0;
+      bottom: -1px;
+      height: 3px;
+      width: 0%;
+      background: linear-gradient(90deg, var(--blue), var(--purple), var(--green), var(--orange), var(--red));
+      transition: width .08s linear;
+    }
+
+    /* ============ HERO ============ */
+    .hero {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 64px 24px 24px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin: 0 0 16px;
+      font-weight: 800;
+      background: linear-gradient(120deg, #e6edf3, #8b949e);
+      color: #e6edf3;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+    .hero .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto 26px;
+    }
+    .hero .subtitle b { color: var(--text); font-weight: 600; }
+    .meta-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .meta-chips span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .meta-chips span::before {
+      content: "";
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    /* ============ LAYOUT ============ */
+    main {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 24px 24px 80px;
+    }
+
+    /* ============ ON THIS PAGE NAV ============ */
+    .toc {
+      position: fixed;
+      top: 120px;
+      right: 28px;
+      width: 190px;
+      z-index: 50;
+    }
+    .toc .toc-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin: 0 0 12px;
+      font-weight: 600;
+    }
+    .toc ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      border-left: 2px solid var(--border);
+    }
+    .toc li { margin: 0; }
+    .toc a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 0 7px 14px;
+      margin-left: -2px;
+      border-left: 2px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-bottom: none;
+      transition: color .15s ease, border-color .15s ease;
+    }
+    .toc a .num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      opacity: 0.7;
+    }
+    .toc a:hover { color: var(--text); }
+    .toc a.active {
+      color: var(--text);
+      border-left-color: var(--blue);
+      font-weight: 600;
+    }
+
+    /* ============ STEP CARD ============ */
+    .step {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left-width: 5px;
+      border-radius: 14px;
+      padding: 32px 34px;
+      margin: 28px 0;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .step.in-view { opacity: 1; transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .step { opacity: 1; transform: none; transition: none; }
+      #progress { transition: none; }
+    }
+
+    .step::after {
+      content: attr(data-accent);
+      display: none;
+    }
+    .step .step-badge::after { content: none; }
+
+    /* watermark big faded number */
+    .step .step-head { position: relative; z-index: 2; }
+    .step .watermark,
+    .step-watermark { display: none; }
+
+    .step .step-badge {
+      position: relative;
+      z-index: 2;
+    }
+    .step-wm {
+      position: absolute;
+      top: -28px;
+      right: 4px;
+      font-size: 200px;
+      font-weight: 800;
+      line-height: 1;
+      font-family: 'JetBrains Mono', monospace;
+      opacity: 0.05;
+      pointer-events: none;
+      z-index: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .step-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+    .step-badge {
+      flex: 0 0 auto;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #0d1117;
+    }
+    .step-titles { min-width: 0; }
+    .step-titles h2 {
+      margin: 2px 0 6px;
+      font-size: 1.55rem;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+    .step-sub {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.98rem;
+    }
+
+    .step-body { position: relative; z-index: 2; }
+    .step-body > p { color: var(--text); }
+
+    /* ============ SUBSTEP ============ */
+    .substep {
+      border-top: 1px solid var(--border);
+      padding: 22px 0 4px;
+    }
+    .substep:first-child { border-top: none; padding-top: 8px; }
+
+    .substep-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .substep-num {
+      flex: 0 0 auto;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #0d1117;
+    }
+    .substep-head h3 {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .substep-body { padding-left: 38px; }
+    .substep-body p { margin: 0 0 12px; }
+
+    /* ============ CODE BLOCK ============ */
+    .code-block {
+      position: relative;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin: 14px 0 16px;
+      padding: 14px 16px;
+      padding-right: 78px;
+      overflow: hidden;
+    }
+    .code-block pre {
+      margin: 0;
+      overflow-x: auto;
+    }
+    .code-block code {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.84rem;
+      line-height: 1.6;
+      background: none;
+      border: none;
+      padding: 0;
+      color: #c9d1d9;
+      white-space: pre;
+      display: block;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .copy-btn:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+    .copy-btn.copied {
+      background: rgba(63, 185, 80, 0.15);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    /* ============ CALLOUTS ============ */
+    .note, .warning {
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 0.94rem;
+      border-left: 4px solid;
+    }
+    .note p, .warning p { margin: 0; }
+    .note {
+      background: rgba(88, 166, 255, 0.08);
+      border-left-color: var(--blue);
+      color: #c7d6ea;
+    }
+    .note code { background: rgba(88,166,255,0.12); border-color: rgba(88,166,255,0.25); }
+    .warning {
+      background: rgba(240, 136, 62, 0.09);
+      border-left-color: var(--orange);
+      color: #f0d3bb;
+    }
+    .warning code { background: rgba(240,136,62,0.14); border-color: rgba(240,136,62,0.3); }
+    .note strong, .warning strong { color: var(--text); }
+
+    /* ============ CLAUDE SHORTCUT CALLOUT ============ */
+    .claude-tip {
+      background: linear-gradient(180deg, rgba(240,136,62,0.10), rgba(240,136,62,0.035));
+      border: 1px solid rgba(240,136,62,0.35);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin: 4px 0 20px;
+    }
+    .claude-tip h4 {
+      margin: 0 0 10px;
+      font-size: 1.04rem;
+      color: var(--orange);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .claude-tip p { margin: 0 0 12px; color: #f0d8c4; font-size: 0.95rem; }
+    .claude-tip code { background: rgba(240,136,62,0.14); border-color: rgba(240,136,62,0.3); }
+    .claude-tip .warning { margin-bottom: 0; }
+    .code-block.prose code { white-space: pre-wrap; word-break: break-word; }
+    .or-manual {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin: 0 0 18px;
+      padding-top: 4px;
+    }
+
+    /* ============ KV TABLE ============ */
+    .kv-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 0.92rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .kv-table thead th {
+      text-align: left;
+      background: var(--code-bg);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 10px 14px;
+    }
+    .kv-table td {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .kv-table td:first-child {
+      color: var(--text-muted);
+      white-space: nowrap;
+      width: 1%;
+      font-weight: 500;
+    }
+
+    /* ============ CARDS ============ */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+    .card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    /* ============ ACCENT THEMING ============ */
+    .step[data-accent="blue"]   { border-left-color: var(--blue); }
+    .step[data-accent="purple"] { border-left-color: var(--purple); }
+    .step[data-accent="green"]  { border-left-color: var(--green); }
+    .step[data-accent="orange"] { border-left-color: var(--orange); }
+    .step[data-accent="red"]    { border-left-color: var(--red); }
+
+    .step[data-accent="blue"]   .step-badge { background: var(--blue); }
+    .step[data-accent="purple"] .step-badge { background: var(--purple); }
+    .step[data-accent="green"]  .step-badge { background: var(--green); }
+    .step[data-accent="orange"] .step-badge { background: var(--orange); }
+    .step[data-accent="red"]    .step-badge { background: var(--red); }
+
+    .step[data-accent="blue"]   .substep-num { background: var(--blue); }
+    .step[data-accent="purple"] .substep-num { background: var(--purple); }
+    .step[data-accent="green"]  .substep-num { background: var(--green); }
+    .step[data-accent="orange"] .substep-num { background: var(--orange); }
+    .step[data-accent="red"]    .substep-num { background: var(--red); }
+
+    .step[data-accent="blue"]   .step-titles h2 { color: var(--blue); }
+    .step[data-accent="purple"] .step-titles h2 { color: var(--purple); }
+    .step[data-accent="green"]  .step-titles h2 { color: var(--green); }
+    .step[data-accent="orange"] .step-titles h2 { color: var(--orange); }
+    .step[data-accent="red"]    .step-titles h2 { color: var(--red); }
+
+    .step[data-accent="purple"] a { color: var(--purple); }
+    .step[data-accent="green"]  a { color: var(--green); }
+    .step[data-accent="orange"] a { color: var(--orange); }
+    .step[data-accent="red"]    a { color: var(--red); }
+
+    .step[data-accent="blue"]   .step-wm { color: var(--blue); }
+    .step[data-accent="purple"] .step-wm { color: var(--purple); }
+    .step[data-accent="green"]  .step-wm { color: var(--green); }
+    .step[data-accent="orange"] .step-wm { color: var(--orange); }
+    .step[data-accent="red"]    .step-wm { color: var(--red); }
+
+    /* ============ COMPLETION BANNER ============ */
+    .done-banner {
+      background: linear-gradient(135deg, rgba(63,185,80,0.12), rgba(88,166,255,0.10));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 36px 34px;
+      margin: 36px 0 12px;
+      text-align: center;
+    }
+    .done-banner h2 {
+      font-size: 1.8rem;
+      margin: 0 0 10px;
+      letter-spacing: -0.02em;
+    }
+    .done-banner p {
+      color: var(--text-muted);
+      max-width: 560px;
+      margin: 0 auto 20px;
+    }
+    .recap {
+      list-style: none;
+      margin: 0 auto;
+      padding: 0;
+      max-width: 420px;
+      text-align: left;
+    }
+    .recap li {
+      padding: 8px 0 8px 30px;
+      position: relative;
+      border-top: 1px solid var(--border);
+      font-size: 0.94rem;
+    }
+    .recap li:first-child { border-top: none; }
+    .recap li::before {
+      content: "✓";
+      position: absolute;
+      left: 4px;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    /* ============ FOOTER ============ */
+    footer {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--text-muted); }
+    footer a:hover { color: var(--blue); }
+
+    /* ============ ARCHITECTURE DIAGRAM ============ */
+    .arch {
+      margin: 28px 0 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px 34px;
+    }
+    .arch h2 { margin: 0 0 6px; font-size: 1.55rem; letter-spacing: -0.02em; }
+    .arch > p { color: var(--text-muted); margin: 0 0 22px; max-width: 62ch; }
+    .arch-figure { width: 100%; overflow-x: auto; }
+    .arch svg { width: 100%; min-width: 600px; height: auto; display: block; }
+    .arch svg text { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .arch .d-box { fill: var(--surface-2); stroke: var(--border); stroke-width: 1.5; }
+    .arch .d-board { fill: var(--bg); stroke: var(--blue); stroke-width: 2; }
+    .arch .d-pill { fill: var(--code-bg); stroke-width: 1.5; }
+    .arch .d-title { fill: var(--text); font-weight: 700; font-size: 14px; }
+    .arch .d-sub { fill: var(--text-muted); font-size: 11.5px; }
+    .arch .d-ptitle { fill: var(--text); font-weight: 600; font-size: 12.5px; }
+    .arch .d-psub { fill: var(--text-muted); font-size: 10.5px; }
+    .arch .d-edge { fill: var(--text-muted); font-size: 11px; font-weight: 500; }
+    .arch .d-flow { fill: none; stroke-width: 2; }
+    .arch .d-enc { stroke-dasharray: 6 5; }
+    .arch-legend {
+      display: flex; flex-wrap: wrap; gap: 12px 22px;
+      margin-top: 20px; font-size: 0.82rem; color: var(--text-muted);
+    }
+    .arch-legend span { display: inline-flex; align-items: center; gap: 8px; }
+    .arch-legend .ln { width: 24px; border-top: 2px solid var(--text-muted); }
+    .arch-legend .ln.enc { border-top-style: dashed; }
+    .arch-legend .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 1320px) {
+      .toc { display: none; }
+    }
+    @media (max-width: 640px) {
+      .step { padding: 24px 20px; }
+      .step-head { gap: 12px; }
+      .substep-body { padding-left: 0; }
+      .step-wm { font-size: 130px; top: -10px; }
+      .hero { padding-top: 44px; }
+      .header-inner { padding: 12px 16px; }
+      main { padding: 16px 16px 60px; }
+      .kv-table { display: block; overflow-x: auto; }
+      .code-block pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+      .code-block code { white-space: pre-wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <span class="wordmark">
+        <span class="chip-mark">◇</span>
+        Arduino Uno Q <span class="muted">Setup Guide</span>
+      </span>
+    </div>
+    <div id="progress"></div>
+  </header>
+
+  <section class="hero">
+    <h1>Arduino Uno Q — Full Setup Guide</h1>
+    <p class="subtitle">
+      <b>App Lab</b> → <b>reboot</b> → <b>Tailscale</b> → <b>Claude Code</b> → public <b>Cloudflare Tunnel</b>.
+    </p>
+    <div class="meta-chips">
+      <span>~30 min</span>
+      <span>Debian Linux / aarch64</span>
+      <span>mostly free accounts</span>
+    </div>
+  </section>
+
+  <nav class="toc" aria-label="On this page">
+    <p class="toc-title">On this page</p>
+    <ol>
+      <li><a href="#step-arduino"><span class="num">01</span> App Lab</a></li>
+      <li><a href="#step-reboot"><span class="num">02</span> Reboot</a></li>
+      <li><a href="#step-tailscale"><span class="num">03</span> Tailscale</a></li>
+      <li><a href="#step-claude"><span class="num">04</span> Claude Code</a></li>
+      <li><a href="#step-cloudflare"><span class="num">05</span> Cloudflare</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+<section class="step" id="step-arduino" data-accent="blue">
+  <span class="step-wm" aria-hidden="true">01</span>
+  <div class="step-head">
+    <span class="step-badge">01</span>
+    <div class="step-titles">
+      <h2>Set Up the Arduino Uno Q via App Lab</h2>
+      <p class="step-sub">Bring the board online with <a href="https://app.arduino.cc">Arduino App Lab</a> &mdash; see the <a href="https://docs.arduino.cc/software/app-lab/">App Lab documentation</a> for reference.</p>
+    </div>
+  </div>
+  <div class="step-body">
+
+    <div class="note"><p>The Uno Q is a dual-brain board: a Qualcomm Dragonwing QRB2210 (quad-core ARM Cortex-A53) running Debian Linux paired with an STM32U585 (Cortex-M33) microcontroller. App Lab runs on the Linux side and bridges to the MCU through its <code>Bricks</code> architecture, so it is the single tool for flashing sketches, managing Linux, updating firmware, and configuring Wi-Fi and SSH.</p></div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">1</span><h3>Download and install Arduino App Lab</h3></div>
+      <div class="substep-body">
+        <p>Install the App Lab desktop application for Windows, macOS, or Linux from <a href="https://www.arduino.cc/en/software">arduino.cc/software</a>. App Lab talks to the board over USB and serves a browser-based WebUI. App Lab is also pre-installed on the Uno Q itself, so once the board is on your network you can reach its WebUI directly in a browser.</p>
+        <p>On Windows and macOS no manual drivers are needed. On a Linux desktop host, add a udev rule so App Lab can access the board over USB, then reload udev:</p>
+        <div class="code-block"><pre><code>echo 'SUBSYSTEMS=="usb", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0078", MODE="0660", TAG+="uaccess"' | sudo tee /etc/udev/rules.d/60-arduino-uno-q.rules
+sudo udevadm control --reload-rules &amp;&amp; sudo udevadm trigger</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">2</span><h3>Connect the board over USB-C</h3></div>
+      <div class="substep-body">
+        <p>Plug the Uno Q into your computer with a USB-C cable and wait roughly 30 seconds for the board to boot &mdash; watch for the heartbeat / RGB LED activity before it becomes detectable. Connect the board directly; avoid USB hubs during first setup.</p>
+        <div class="warning"><p>Use a USB-C <strong>data</strong> cable, not a charge-only / power-only cable. Charge-only cables carry no data and will prevent App Lab from ever detecting the board.</p></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">3</span><h3>Let App Lab detect the board</h3></div>
+      <div class="substep-body">
+        <p>Open App Lab. It scans for boards on USB, which can take a little while. If several boards or connections appear, select the one you want &mdash; only one board can be connected at a time. Once connected, App Lab opens on the Examples section.</p>
+        <div class="warning"><p>Only one board can be connected to App Lab at a time. If detection is ambiguous, disconnect any other Arduino boards so the Uno Q is the only candidate.</p></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">4</span><h3>Accept the first-install update dialogue</h3></div>
+      <div class="substep-body">
+        <p>The very first time the board connects, App Lab shows an <strong>update dialogue</strong> that refreshes the board firmware and Linux image. You must accept it and let the update run to completion before doing anything else.</p>
+        <div class="note"><p>This update is required, not optional. The update only finishes installing after the reboot in <strong>Step 02</strong> &mdash; without that reboot the update stays half-applied and later steps (such as installing Tailscale) will fail to install. Complete this update now, then proceed to the reboot in Step 02 before continuing.</p></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">5</span><h3>Set up the first-run Linux credentials</h3></div>
+      <div class="substep-body">
+        <p>During onboarding App Lab prompts you to set a board name and create the Linux account used for SSH. On the Uno Q the username is fixed as <code>arduino</code> and the out-of-box default password is also <code>arduino</code>.</p>
+        <table class="kv-table"><thead><tr><th>Field</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Username</td><td><code>arduino</code></td></tr>
+          <tr><td>Default password</td><td><code>arduino</code></td></tr>
+        </tbody></table>
+        <div class="warning"><p>Change the password immediately. The default <code>arduino</code> / <code>arduino</code> credential is well known &mdash; leaving it in place exposes a full Debian Linux machine with <code>sudo</code> on your network.</p></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">6</span><h3>Join Wi-Fi and find the board IP</h3></div>
+      <div class="substep-body">
+        <div class="note"><p><strong>Already connected?</strong> If you joined Wi-Fi during App Lab's first-run setup, the board is already online &mdash; skip straight to finding its address below.</p></div>
+        <p>Otherwise, the easiest path is the App Lab onboarding Wi-Fi step, or click the network icon in App Lab's upper-right to pick an access point and enter its password. The Uno Q has dual-band Wi-Fi 5 (2.4 and 5 GHz). From a shell you can connect manually:</p>
+        <div class="code-block"><pre><code>nmcli device wifi list
+sudo nmcli device wifi connect 'YOUR_SSID' password 'YOUR_WIFI_PASSWORD'</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Once connected, find the board's address with <code>hostname -I</code> or by inspecting the <code>wlan0</code> interface:</p>
+        <div class="code-block"><pre><code>hostname -I
+ip addr show wlan0</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="note"><p>The board also advertises itself over mDNS, so you can usually reach it as <code>&lt;hostname&gt;.local</code> &mdash; where <code>&lt;hostname&gt;</code> is the board name you set during App Lab setup &mdash; without knowing its IP. After Wi-Fi is configured you can unplug USB and power the board from a 5V/3A USB-C supply for headless use &mdash; App Lab will rediscover it over the network. WebUI Brick apps are then served at <code>http://&lt;board-ip&gt;:7000</code>.</p></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">7</span><h3>Connect over SSH</h3></div>
+      <div class="substep-body">
+        <p>SSH is <strong>enabled by default</strong> on the Uno Q &mdash; no install or service setup needed. Connect from your computer using the <code>arduino</code> account and the board's mDNS name &mdash; that's the <code>&lt;hostname&gt;</code> you chose during App Lab setup, with a <code>.local</code> suffix:</p>
+        <div class="code-block"><pre><code>ssh arduino@&lt;hostname&gt;.local</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="note"><p>If <code>&lt;hostname&gt;.local</code> does not resolve on your network, substitute the IP you found above, for example <code>ssh arduino@192.168.1.50</code>. You can also add the board as a host in the VS Code <strong>Remote - SSH</strong> extension for full remote development.</p></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="step" id="step-reboot" data-accent="purple">
+  <span class="step-wm" aria-hidden="true">02</span>
+  <div class="step-head">
+    <span class="step-badge">02</span>
+    <div class="step-titles">
+      <h2>Reboot to Finish the Update</h2>
+      <p class="step-sub">A clean restart finishes installing the App Lab update and activates your saved config.</p>
+    </div>
+  </div>
+  <div class="step-body">
+    <div class="warning"><p>This reboot is <strong>required, not optional</strong>. The App Lab update dialogue from Step 01 only finishes installing after a restart. If you skip this reboot, the next step &mdash; installing Tailscale &mdash; will <strong>fail</strong>.</p></div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">1</span><h3>Issue the reboot</h3></div>
+      <div class="substep-body">
+        <p>From a terminal on the board (or your existing SSH session) run the standard Linux command. Enter your Linux password if prompted (default <code>arduino</code> unless you changed it during setup).</p>
+        <div class="code-block"><pre><code>sudo reboot</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>No terminal handy? A <strong>long press of 5+ seconds</strong> on the board's power button reboots the Linux side as well.</p>
+        <div class="warning"><p>On this hybrid board <code>sudo shutdown now</code> <strong>reboots</strong> instead of powering off. For a true shutdown, use <code>sudo halt</code>.</p></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">2</span><h3>Wait for it to come back</h3></div>
+      <div class="substep-body">
+        <p>Your SSH session drops instantly (<code>Connection closed by remote host</code>) &mdash; that is expected, not an error. The board is unreachable for roughly <strong>45&ndash;60 seconds</strong> while Debian and its services restart. Watch the LED matrix animation and wait for SSH to start accepting connections again before reconnecting.</p>
+        <div class="warning"><p>Do not assume failure too early. A <code>Connection refused</code> on reconnect means the network is up but <code>sshd</code> hasn't finished starting &mdash; wait a few more seconds and retry rather than re-running setup.</p></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">3</span><h3>Reconnect via SSH</h3></div>
+      <div class="substep-body">
+        <p>Reconnect as the <code>arduino</code> user using the board's IP address. Wi-Fi credentials persist across reboots, so the board auto-rejoins the same network.</p>
+        <div class="code-block"><pre><code>ssh arduino@&lt;board-ip-address&gt;</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="note"><p>Default credentials are username <code>arduino</code> / password <code>arduino</code>. The system will keep nagging you until you change it &mdash; run <code>passwd</code> and set a new password immediately to keep the board secure on your network.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="step" id="step-tailscale" data-accent="green">
+  <span class="step-wm" aria-hidden="true">03</span>
+  <div class="step-head">
+    <span class="step-badge">03</span>
+    <div class="step-titles">
+      <h2>SSH From Anywhere With Tailscale</h2>
+      <p class="step-sub">Reach your Uno Q from any network with a private mesh VPN &mdash; <a href="https://tailscale.com">Tailscale</a> is free for personal use.</p>
+    </div>
+  </div>
+  <div class="step-body">
+    <div class="note"><p>Make sure the reboot from Step 02 has fully completed before you start. If the App Lab update has not settled, the Tailscale install below can fail partway through.</p></div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">1</span><h3>Create a free Tailscale account</h3></div>
+      <div class="substep-body">
+        <p>Go to <a href="https://login.tailscale.com/start">login.tailscale.com/start</a> and sign in with an identity provider &mdash; Google, GitHub, Microsoft, Apple, or email all work. This automatically provisions your personal <em>tailnet</em> on the free Personal plan. You'll use this same account on every device.</p>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">2</span><h3>On your Arduino Uno Q</h3></div>
+      <div class="substep-body">
+        <p>Install Tailscale with the official script. It auto-detects the Uno Q's CPU architecture (arm64/aarch64 or armhf) and the Debian/Ubuntu apt repo, then installs the <code>tailscale</code> CLI and the <code>tailscaled</code> daemon as a systemd service that starts on boot.</p>
+        <div class="code-block"><pre><code>curl -fsSL https://tailscale.com/install.sh | sh</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Bring the device online and authenticate it to your tailnet. This needs <code>sudo</code> because it controls the daemon:</p>
+        <div class="code-block"><pre><code>sudo tailscale up</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>The command prints a <code>https://login.tailscale.com/...</code> URL. Open it in any browser, log in with the same account from above, and approve the device. The Uno Q is now a node on your tailnet, reachable from your other devices by its Tailscale IP or MagicDNS name.</p>
+        <div class="note"><p>No <code>--ssh</code> flag needed: the Uno Q already runs its own SSH server (enabled by default, Step 01), so you connect to it with a plain <code>ssh</code> over the tailnet using the <code>arduino</code> account &mdash; no Tailscale SSH feature required.</p></div>
+        <p>Find the device's Tailscale address so you can reach it. Get the <code>100.x.y.z</code> Tailscale IP, or list all nodes and their names:</p>
+        <div class="code-block"><pre><code>tailscale ip -4
+tailscale status</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>The device's MagicDNS hostname is its machine name (e.g. <code>uno-q</code>), or the fully-qualified <code>&lt;machine-name&gt;.&lt;tailnet&gt;.ts.net</code> shown in the <a href="https://login.tailscale.com/admin/machines">admin console</a>. MagicDNS is on by default, so you can use the short hostname instead of the IP.</p>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">3</span><h3>On your other devices</h3></div>
+      <div class="substep-body">
+        <p>Install Tailscale on whatever you'll connect <em>from</em> and sign in with the <strong>same account</strong> so both devices share the tailnet:</p>
+        <table class="kv-table"><thead><tr><th>Platform</th><th>Install</th></tr></thead>
+        <tbody>
+          <tr><td>macOS</td><td>Mac App Store, <a href="https://tailscale.com/download/mac">tailscale.com/download/mac</a>, or <code>brew install tailscale</code></td></tr>
+          <tr><td>Windows</td><td><a href="https://tailscale.com/download/windows">tailscale.com/download/windows</a>, then sign in</td></tr>
+          <tr><td>Linux</td><td><code>curl -fsSL https://tailscale.com/install.sh | sh</code> then <code>sudo tailscale up</code></td></tr>
+          <tr><td>iOS / Android</td><td>Install the Tailscale app from the App Store or Google Play</td></tr>
+        </tbody></table>
+        <p>Confirm both the Uno Q and the client appear with <code>tailscale status</code>, then connect from anywhere with a normal SSH command &mdash; the tailnet makes the board reachable by its MagicDNS name or Tailscale IP:</p>
+        <div class="code-block"><pre><code>ssh arduino@uno-q
+ssh arduino@100.x.y.z</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Authenticate with the <code>arduino</code> account password (or an SSH key you've added). If MagicDNS hostname resolution ever fails, just use the <code>100.x.y.z</code> Tailscale IP.</p>
+      </div>
+    </div>
+
+    <div class="note"><p>The free Personal plan covers up to 100 devices &mdash; far more than enough here. For a headless device, disable key expiry in the admin console (Machines &gt; the device &gt; Disable key expiry) so the Uno Q stays reachable without periodic re-authentication.</p></div>
+
+    <div class="warning"><p>Any device on your tailnet can reach the Uno Q's SSH server, so it's only as private as your tailnet. Keep your tailnet to devices you own, secure your Tailscale login with 2FA, and make sure you changed the default <code>arduino</code> password back in Step 01.</p></div>
+  </div>
+</section>
+
+<section class="step" id="step-claude" data-accent="orange">
+  <span class="step-wm" aria-hidden="true">04</span>
+  <div class="step-head">
+    <span class="step-badge">04</span>
+    <div class="step-titles">
+      <h2>Install Claude Code + the cc Alias</h2>
+      <p class="step-sub">Install <a href="https://claude.ai/code">Claude Code</a>, Anthropic's official CLI, and wire up a two-letter <code>cc</code> shortcut.</p>
+    </div>
+  </div>
+  <div class="step-body">
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">1</span><h3>Install Claude Code</h3></div>
+      <div class="substep-body">
+        <p>Use the official native installer &mdash; one command, no Node.js or npm required. It downloads a self-contained binary for the Uno Q's ARM64 architecture and drops it in <code>~/.local/bin</code>.</p>
+        <div class="code-block"><pre><code>curl -fsSL https://claude.ai/install.sh | bash</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Confirm it's on the box:</p>
+        <div class="code-block"><pre><code>claude --version</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="note"><p>The old <code>npm install -g @anthropic-ai/claude-code</code> method is deprecated &mdash; use the installer above. For a full environment health check, run <code>claude doctor</code>.</p></div>
+      </div>
+    </div>
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">2</span><h3>If the 'claude' command isn't found</h3></div>
+      <div class="substep-body">
+        <p>If running <code>claude</code> after installing gives <code>command not found</code>, the installer's <code>~/.local/bin</code> directory isn't on your <code>PATH</code>. Add it and reload your shell.</p>
+        <div class="code-block"><pre><code>echo 'export PATH="$HOME/.local/bin:$PATH"' &gt;&gt; ~/.bashrc &amp;&amp; source ~/.bashrc</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="note"><p>This appends <code>$HOME/.local/bin</code> to your <code>PATH</code> in <code>~/.bashrc</code> and reloads the shell so the <code>claude</code> command resolves immediately, and in every future terminal session.</p></div>
+      </div>
+    </div>
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">3</span><h3>Authenticate</h3></div>
+      <div class="substep-body">
+        <p>Run <code>claude</code> and follow the login prompt to sign in with a Claude.ai Pro/Max or Anthropic Console account.</p>
+        <div class="code-block"><pre><code>claude</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>On a headless board with no browser handy, you can authenticate with an API key instead. Add it to <code>~/.bashrc</code> to make it persist.</p>
+        <div class="code-block"><pre><code>export ANTHROPIC_API_KEY=sk-ant-...</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="warning"><p>This stores your API key in <strong>plaintext</strong> in <code>~/.bashrc</code>, readable by anything running as the <code>arduino</code> user. Prefer the interactive <code>claude</code> login above where you can; if you must use a key, treat it as a secret &mdash; don't commit <code>~/.bashrc</code> to git, and remember that anyone who gains shell access to the board can read it.</p></div>
+      </div>
+    </div>
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">4</span><h3>Add the cc alias</h3></div>
+      <div class="substep-body">
+        <p>The <code>cc</code> alias launches Claude Code in a hands-off, remotely steerable mode. Try it in the current shell first.</p>
+        <div class="code-block"><pre><code>alias cc='claude --dangerously-skip-permissions --remote-control'</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Then make it permanent by appending it to <code>~/.bashrc</code> and reloading.</p>
+        <div class="code-block"><pre><code>echo "alias cc='claude --dangerously-skip-permissions --remote-control'" &gt;&gt; ~/.bashrc &amp;&amp; source ~/.bashrc</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>In plain terms: <code>--dangerously-skip-permissions</code> skips the interactive approval prompts before each file edit or command, which is handy on a headless board you control, and <code>--remote-control</code> lets you drive the session remotely (for example from the Claude mobile app) instead of only from the local terminal.</p>
+        <div class="warning"><p><code>--dangerously-skip-permissions</code> lets Claude read, modify, and run things without asking first. Only use it on a board you trust and control, never on a shared machine or untrusted network. Because the <code>arduino</code> account has <code>sudo</code>, this effectively lets Claude run anything as root &mdash; treat enabling it as handing over full control of the board.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="step" id="step-cloudflare" data-accent="red">
+  <span class="step-wm" aria-hidden="true">05</span>
+  <div class="step-head">
+    <span class="step-badge">05</span>
+    <div class="step-titles">
+      <h2>Go Public With a Cloudflare Tunnel</h2>
+      <p class="step-sub">Use a <a href="https://www.cloudflare.com/products/tunnel/">Cloudflare Tunnel</a> to expose a local service to the public internet &mdash; no port forwarding, no opening firewall ports.</p>
+    </div>
+  </div>
+  <div class="step-body">
+
+    <div class="claude-tip">
+      <h4>⚡ Shortcut: let Claude Code do it</h4>
+      <p>You already installed Claude Code in <strong>Step 04</strong> &mdash; so instead of running the commands below by hand, you can just describe what you want and let it do the work. Launch it on the board (over your Tailscale SSH session):</p>
+      <div class="code-block"><pre><code>cc</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <p>Then ask, for example:</p>
+      <div class="code-block prose"><pre><code>Install cloudflared if it isn't already, then start a Cloudflare quick tunnel that exposes my local web server on http://localhost:8080 and print the public trycloudflare.com URL.</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <p>Claude runs the same steps documented below &mdash; confirming the architecture, installing <code>cloudflared</code>, and starting the tunnel &mdash; then hands you the public URL. Want a permanent address that survives reboots? Just add: <em>&ldquo;make it a persistent named tunnel on my domain running as a systemd service&rdquo;</em> &mdash; though for that you'll first need your own domain added to Cloudflare (see the named-tunnel step below).</p>
+      <div class="warning"><p>The <code>cc</code> alias runs with <code>--dangerously-skip-permissions</code>, so Claude executes these <code>sudo</code> commands without stopping to ask. That's convenient on a board you control; if you'd rather approve each action, launch plain <code>claude</code> instead of <code>cc</code>.</p></div>
+    </div>
+    <p class="or-manual">Prefer to run it yourself, or want to understand each piece? Follow the manual steps below. &darr;</p>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">1</span><h3>Start a local web server</h3></div>
+      <div class="substep-body">
+        <p>You need something listening on a local port for the tunnel to forward to. The quickest test is Python's built-in HTTP server on port <code>8080</code>. The tunnel will forward to <code>http://localhost:8080</code>.</p>
+        <div class="code-block"><pre><code>python3 -m http.server 8080</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="warning"><p>The <code>python3 -m http.server</code> example serves every file in the current directory to the entire internet. Run it from a directory you are comfortable exposing, or point the tunnel at your real app instead.</p></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">2</span><h3>Install cloudflared on the board</h3></div>
+      <div class="substep-body">
+        <p>The Uno Q is <code>aarch64</code> (ARM64) &mdash; confirm with <code>uname -m</code>. The cleanest install on the Debian-based Uno Q image is the Cloudflare apt repository, which auto-selects the right architecture and gives you updates via <code>apt upgrade</code>.</p>
+        <div class="code-block"><pre><code>sudo mkdir -p --mode=0755 /usr/share/keyrings
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg &gt;/dev/null
+echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
+sudo apt-get update &amp;&amp; sudo apt-get install -y cloudflared</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>If the apt repo is unavailable, download the ARM64 binary directly from GitHub instead.</p>
+        <div class="code-block"><pre><code>curl -L --output cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64
+chmod +x cloudflared
+sudo mv cloudflared /usr/local/bin/</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Verify the install:</p>
+        <div class="code-block"><pre><code>cloudflared --version</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="note"><p>Match the binary to the architecture. Installing the arm64 build on a 32-bit (<code>armv7l</code>) OS &mdash; or vice versa &mdash; gives an <code>Exec format error</code>. Always confirm with <code>uname -m</code> first.</p></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">3</span><h3>Quick tunnel (no account)</h3></div>
+      <div class="substep-body">
+        <p>The fastest way to go public: point a quick tunnel at your local port. No Cloudflare account and no domain required.</p>
+        <div class="code-block"><pre><code>cloudflared tunnel --url http://localhost:8080</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>cloudflared prints a random public URL of the form <code>https://&lt;random-words&gt;.trycloudflare.com</code> (for example <code>https://happy-tree-cloud-1234.trycloudflare.com</code>). Anyone can reach your local server at that URL while the command runs.</p>
+        <div class="warning"><p><strong>This is not a permanent solution.</strong> The <code>trycloudflare.com</code> URL is random and throwaway &mdash; it changes every time <code>cloudflared</code> restarts, disappears when the command stops, has no uptime guarantee, and is rate-limited. It's perfect for a quick demo or sharing a link for a few minutes. For a real, stable site you control &mdash; with your own web address &mdash; set up a named tunnel on your own domain (next).</p></div>
+      </div>
+    </div>
+
+    <div class="substep">
+      <div class="substep-head"><span class="substep-num">4</span><h3>Persistent named tunnel (free Cloudflare account)</h3></div>
+      <div class="substep-body">
+        <p>For a stable URL on your own domain, create a free account at <a href="https://dash.cloudflare.com/sign-up">dash.cloudflare.com</a> and add a domain whose nameservers point at Cloudflare (the zone). Then authenticate &mdash; on the headless Uno Q this prints a URL you open in a browser on another machine.</p>
+        <div class="note"><p><strong>You bring the domain.</strong> Cloudflare Tunnel is free, but a permanent public address needs a domain <em>you own</em> (register one with any registrar &mdash; Cloudflare, Namecheap, etc.), added to Cloudflare as a zone with its nameservers delegated to Cloudflare. That registration and DNS setup is a one-time job you do yourself in the Cloudflare dashboard before the steps below will work. Throughout this section, replace <code>app.example.com</code> with your own subdomain.</p></div>
+        <div class="code-block"><pre><code>cloudflared tunnel login</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Create the tunnel. This writes a credentials file to <code>~/.cloudflared/&lt;UUID&gt;.json</code> and registers a persistent name.</p>
+        <div class="code-block"><pre><code>cloudflared tunnel create uno-q</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Write <code>~/.cloudflared/config.yml</code> mapping a hostname to your local service. The final <code>http_status:404</code> rule is a required catch-all.</p>
+        <div class="code-block"><pre><code>tunnel: &lt;UUID-from-create&gt;
+credentials-file: /home/&lt;user&gt;/.cloudflared/&lt;UUID&gt;.json
+ingress:
+  - hostname: app.example.com
+    service: http://localhost:8080
+  - service: http_status:404</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Route DNS, creating a CNAME from your subdomain to <code>&lt;UUID&gt;.cfargotunnel.com</code>, then run the tunnel.</p>
+        <div class="code-block"><pre><code>cloudflared tunnel route dns uno-q app.example.com
+cloudflared tunnel run uno-q</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <p>Your server is now public at <code>https://app.example.com</code> with Cloudflare-managed TLS. To survive reboots and SSH disconnects, install it as a systemd service rather than leaving it in a shell.</p>
+        <div class="code-block"><pre><code>sudo cloudflared service install
+sudo systemctl enable --now cloudflared</code></pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <div class="note"><p>A plain <code>cloudflared tunnel run</code> stops when your SSH session ends. The systemd service runs the tunnel from your <code>config.yml</code> at boot &mdash; the key to a reliable headless setup on the Uno Q.</p></div>
+      </div>
+    </div>
+
+    <div class="warning"><p>A public tunnel exposes your service to the entire internet, bypassing your LAN firewall. Add authentication &mdash; such as <a href="https://www.cloudflare.com/zero-trust/products/access/">Cloudflare Access</a> &mdash; in front of anything sensitive before you expose it.</p></div>
+
+  </div>
+</section>
+
+    <section class="arch" id="overview" aria-labelledby="arch-h">
+      <h2 id="arch-h">How it all connects</h2>
+      <p>Two paths meet at the board. <strong>You</strong> manage it privately over Tailscale SSH from anywhere; the <strong>public</strong> reaches your website through Cloudflare's edge over an encrypted outbound tunnel &mdash; no open ports, no port forwarding.</p>
+      <div class="arch-figure">
+        <svg viewBox="0 0 900 470" role="img" aria-labelledby="arch-svg-t arch-svg-d">
+          <title id="arch-svg-t">Arduino Uno Q connectivity overview</title>
+          <desc id="arch-svg-d">Website visitors reach Cloudflare's edge over HTTPS, which forwards traffic through an encrypted outbound tunnel to cloudflared on the Arduino Uno Q, then to the local web server. Separately, you connect from any device over the Tailscale WireGuard mesh and SSH into the board to run Claude Code.</desc>
+          <defs>
+            <marker id="ah-r" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--red)"/></marker>
+            <marker id="ah-g" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--green)"/></marker>
+            <marker id="ah-b" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--blue)"/></marker>
+          </defs>
+
+          <!-- ===== PUBLIC SERVING PATH (top) ===== -->
+          <rect class="d-box" x="20" y="60" width="172" height="78" rx="11"/>
+          <text class="d-title" x="106" y="96" text-anchor="middle">🌐 Website visitors</text>
+          <text class="d-sub" x="106" y="116" text-anchor="middle">anyone, public internet</text>
+
+          <rect class="d-box" x="250" y="60" width="190" height="78" rx="11" stroke="var(--red)"/>
+          <text class="d-title" x="345" y="96" text-anchor="middle">Cloudflare edge</text>
+          <text class="d-sub" x="345" y="116" text-anchor="middle">public URL · managed TLS</text>
+
+          <!-- visitors -> cloudflare (public HTTPS) -->
+          <line class="d-flow" stroke="var(--red)" x1="192" y1="99" x2="244" y2="99" marker-end="url(#ah-r)"/>
+          <text class="d-edge" x="218" y="90" text-anchor="middle">HTTPS</text>
+
+          <!-- cloudflare -> board cloudflared (encrypted tunnel) -->
+          <path class="d-flow d-enc" stroke="var(--red)" d="M440,99 C520,99 540,150 594,158" marker-end="url(#ah-r)"/>
+          <text class="d-edge" x="520" y="72" text-anchor="middle">encrypted tunnel</text>
+          <text class="d-edge" x="520" y="86" text-anchor="middle">no open ports</text>
+
+          <!-- ===== PRIVATE CONTROL PATH (bottom) ===== -->
+          <rect class="d-box" x="20" y="330" width="172" height="78" rx="11"/>
+          <text class="d-title" x="106" y="366" text-anchor="middle">👤 You</text>
+          <text class="d-sub" x="106" y="386" text-anchor="middle">laptop / phone, anywhere</text>
+
+          <rect class="d-box" x="250" y="330" width="190" height="78" rx="11" stroke="var(--green)"/>
+          <text class="d-title" x="345" y="366" text-anchor="middle">Tailscale</text>
+          <text class="d-sub" x="345" y="386" text-anchor="middle">WireGuard mesh VPN</text>
+
+          <!-- you -> tailscale -->
+          <line class="d-flow" stroke="var(--green)" x1="192" y1="369" x2="244" y2="369" marker-end="url(#ah-g)"/>
+          <text class="d-edge" x="218" y="360" text-anchor="middle">join tailnet</text>
+
+          <!-- tailscale -> board sshd (encrypted) -->
+          <path class="d-flow d-enc" stroke="var(--green)" d="M440,369 C520,369 545,330 594,320" marker-end="url(#ah-g)"/>
+          <text class="d-edge" x="520" y="300" text-anchor="middle">SSH (encrypted)</text>
+          <text class="d-edge" x="520" y="314" text-anchor="middle">arduino@&lt;hostname&gt;.local</text>
+
+          <!-- ===== THE BOARD ===== -->
+          <rect class="d-board" x="600" y="50" width="280" height="368" rx="16"/>
+          <text class="d-title" x="740" y="86" text-anchor="middle" font-size="16">Arduino Uno Q</text>
+          <text class="d-sub" x="740" y="106" text-anchor="middle">Debian Linux · aarch64</text>
+
+          <!-- cloudflared pill -->
+          <rect class="d-pill" x="620" y="140" width="240" height="50" rx="10" stroke="var(--red)"/>
+          <text class="d-ptitle" x="638" y="164">cloudflared</text>
+          <text class="d-psub" x="638" y="180">outbound tunnel client</text>
+
+          <!-- web server pill -->
+          <rect class="d-pill" x="620" y="214" width="240" height="50" rx="10" stroke="var(--blue)"/>
+          <text class="d-ptitle" x="638" y="238">Web server · :8080</text>
+          <text class="d-psub" x="638" y="254">your public website</text>
+
+          <!-- cloudflared -> web server (localhost) -->
+          <line class="d-flow" stroke="var(--blue)" x1="740" y1="190" x2="740" y2="210" marker-end="url(#ah-b)"/>
+          <text class="d-edge" x="752" y="206" text-anchor="start">localhost</text>
+
+          <!-- sshd pill -->
+          <rect class="d-pill" x="620" y="300" width="240" height="50" rx="10" stroke="var(--green)"/>
+          <text class="d-ptitle" x="638" y="324">sshd</text>
+          <text class="d-psub" x="638" y="340">enabled by default</text>
+
+          <!-- claude code pill -->
+          <rect class="d-pill" x="620" y="362" width="240" height="50" rx="10" stroke="var(--orange)"/>
+          <text class="d-ptitle" x="638" y="386">Claude Code · cc</text>
+          <text class="d-psub" x="638" y="402">you build &amp; run the site</text>
+
+          <!-- sshd -> claude code -->
+          <line class="d-flow" stroke="var(--orange)" x1="740" y1="350" x2="740" y2="362" marker-end="url(#ah-b)"/>
+        </svg>
+      </div>
+      <div class="arch-legend">
+        <span><i class="ln"></i> public / clearnet hop</span>
+        <span><i class="ln enc"></i> encrypted (Tailscale &amp; Cloudflare tunnel)</span>
+        <span><i class="dot" style="background:var(--blue)"></i> board / web server</span>
+        <span><i class="dot" style="background:var(--green)"></i> Tailscale</span>
+        <span><i class="dot" style="background:var(--red)"></i> Cloudflare</span>
+        <span><i class="dot" style="background:var(--orange)"></i> Claude Code</span>
+      </div>
+    </section>
+
+    <div class="done-banner">
+      <h2>🎉 You're all set!</h2>
+      <p>Your Uno Q is updated, reachable over SSH from anywhere via Tailscale, running Claude Code, and able to serve a public site through Cloudflare.</p>
+      <ul class="recap">
+        <li>App Lab onboarding &mdash; board online, SSH enabled</li>
+        <li>Reboot &mdash; update fully applied</li>
+        <li>Tailscale &mdash; SSH from any network</li>
+        <li>Claude Code &mdash; installed with the <code>cc</code> alias</li>
+        <li>Cloudflare Tunnel &mdash; a public, TLS-secured URL</li>
+      </ul>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>Built for the Arduino Uno Q &bull; Not affiliated with Arduino, Tailscale, Anthropic, or Cloudflare</p>
+    <p><a href="https://github.com/mikersays/uno-q-setup">github.com/mikersays/uno-q-setup</a></p>
+  </footer>
+
+  <script>
+    // ===== Copy-to-clipboard for every code block =====
+    function copyCode(btn) {
+      var block = btn.closest('.code-block');
+      if (!block) return;
+      var code = block.querySelector('code');
+      if (!code) return;
+      var text = code.textContent.trim();
+
+      var done = function () {
+        var original = 'Copy';
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 2000);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () {
+          fallbackCopy(text); done();
+        });
+      } else {
+        fallbackCopy(text); done();
+      }
+    }
+
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    // ===== Scroll progress bar =====
+    var progress = document.getElementById('progress');
+    function updateProgress() {
+      var doc = document.documentElement;
+      var scrollTop = doc.scrollTop || document.body.scrollTop;
+      var height = doc.scrollHeight - doc.clientHeight;
+      var pct = height > 0 ? (scrollTop / height) * 100 : 0;
+      progress.style.width = pct + '%';
+    }
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress);
+    updateProgress();
+
+    // ===== IntersectionObserver: fade-in + active nav link =====
+    var steps = Array.prototype.slice.call(document.querySelectorAll('.step'));
+    var tocLinks = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+
+    function linkFor(id) {
+      for (var i = 0; i < tocLinks.length; i++) {
+        if (tocLinks[i].getAttribute('href') === '#' + id) return tocLinks[i];
+      }
+      return null;
+    }
+
+    // Reveal animation
+    var revealObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    steps.forEach(function (s) { revealObserver.observe(s); });
+
+    // Active-section highlighting
+    var activeObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          tocLinks.forEach(function (l) { l.classList.remove('active'); });
+          var link = linkFor(entry.target.id);
+          if (link) link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+    steps.forEach(function (s) { activeObserver.observe(s); });
+  </script>
+
+</body>
+</html>
